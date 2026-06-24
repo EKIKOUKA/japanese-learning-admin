@@ -1,5 +1,5 @@
 import { useReactTable, getCoreRowModel, flexRender } from "@tanstack/react-table";
-import { getVideos } from "../api/videos.tsx";
+import { getVideos } from "@/api/videos.tsx";
 import { useEffect, useState } from "react";
 
 type Videos = {
