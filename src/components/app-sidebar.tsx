@@ -9,7 +9,7 @@ import {
     SidebarMenuItem,
     SidebarFooter,
     SidebarTrigger
-} from "@/components/ui/sidebar"
+} from "../components/ui/sidebar"
 import { Home, Film, Filter } from "lucide-react";
 
 import { NavLink } from "react-router-dom"
