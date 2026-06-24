@@ -44,6 +44,7 @@ export function Videos() {
 
     return (
         <>
+            <h1>Videos</h1>
             <table>
                 {table.getRowModel().rows.map(row => (
                     <tr key={row.id}>
