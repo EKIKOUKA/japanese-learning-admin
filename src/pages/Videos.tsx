@@ -9,8 +9,8 @@ type Videos = {
 export function Videos() {
     const columns = [
         {
-            header: 'First Name',
-            accessorKey: 'firstName',
+            id: 'First Name',
+            title: 'firstName',
         },
         {
             header: 'Last Name',
@@ -24,20 +24,12 @@ export function Videos() {
 
     const [videos, setVideos] = useState<Videos[]>([
         {
-            "firstName": "Tanner",
-            "lastName": "Linsley",
-            "age": 33,
-            "visits": 100,
-            "progress": 50,
-            "status": "Married"
+            "id": "Tanner",
+            "title": "Linsley"
         },
         {
-            "firstName": "Kevin",
-            "lastName": "Vandy",
-            "age": 27,
-            "visits": 200,
-            "progress": 100,
-            "status": "Single"
+            "id": "Kevin",
+            "title": "Vandy"
         }
     ]);
     const table = useReactTable({
