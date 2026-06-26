@@ -1,8 +1,8 @@
 export async function getVideos() {
-    const API_BASE_URL= import.meta.env.API_BASE_URL;
+    const API_BASE_URL= import.meta.env.VITE_API_BASE_URL;
 
     const response = await fetch(
-        `${API_BASE_URL}/shadowing/fetch_videos`
+        `${API_BASE_URL}/fetch_videos`
     );
 
     if (!response.ok) {

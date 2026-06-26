@@ -16,20 +16,20 @@ import { NavLink } from "react-router-dom"
 
 const items = [
     {
-        title: "Dashboard",
+        title: "ホーム",
         url: "/",
         icon: Home
     },
     {
-        title: "Videos",
+        title: "動画リスト",
         url: "/videos",
         icon: Film
     },
     {
-        title: "Filters",
-        url: "/filters",
+        title: "スキップ単語リスト",
+        url: "/skip_words_list",
         icon: Filter
-    },
+    }
 ]
 
 export function AppSidebar() {

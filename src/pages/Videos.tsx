@@ -9,29 +9,18 @@ type Videos = {
 export function Videos() {
     const columns = [
         {
-            id: 'First Name',
-            title: 'firstName',
+            accessorKey: 'id',
+            header: 'ID',
+            colSpan: 1
         },
         {
-            header: 'Last Name',
-            accessorKey: 'lastName',
-        },
-        {
-            header: 'Age',
-            accessorKey: 'age',
-        },
+            accessorKey: 'title',
+            header: 'タイトル',
+            colSpan: 5
+        }
     ]
 
-    const [videos, setVideos] = useState<Videos[]>([
-        {
-            "id": "Tanner",
-            "title": "Linsley"
-        },
-        {
-            "id": "Kevin",
-            "title": "Vandy"
-        }
-    ]);
+    const [videos, setVideos] = useState<Videos[]>([]);
     const table = useReactTable({
         data: videos,
         columns,
@@ -39,25 +28,43 @@ export function Videos() {
     });
 
     useEffect(() => {
-        getVideos().then(setVideos)
+        getVideos().then(res => {
+            setVideos(res)
+        });
     }, [])
 
     return (
         <>
-            <h1>Videos</h1>
+            <h1>動画リスト</h1>
             <table>
-                {table.getRowModel().rows.map(row => (
-                    <tr key={row.id}>
-                        {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>
-                                {flexRender(
-                                    cell.column.columnDef.cell,
-                                    cell.getContext()
-                                )}
-                            </td>
-                        ))}
-                    </tr>
-                ))}
+                <thead>
+                    {table.getHeaderGroups().map(row => (
+                        <tr key={row.id}>
+                            {row.headers.map(header => (
+                                <th key={header.id}>
+                                    {flexRender(
+                                        header.column.columnDef.header,
+                                        header.getContext()
+                                    )}
+                                </th>
+                            ))}
+                        </tr>
+                    ))}
+                </thead>
+                <tbody>
+                    {table.getRowModel().rows.map(row => (
+                        <tr key={row.id}>
+                            {row.getVisibleCells().map(cell => (
+                                <td key={cell.id}>
+                                    {flexRender(
+                                        cell.column.columnDef.cell,
+                                        cell.getContext()
+                                    )}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
             </table>
         </>
     );
