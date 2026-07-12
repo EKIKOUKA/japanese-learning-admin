@@ -18,18 +18,21 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export const SkipWordsList = () => {
-    type SkipWordsType = "skipWithPreviousLines" | "skipOnlyCurrentLine";
+    type SkipWordsType = "skipWithPreviousLines" | "skipWithNextLines" | "skipOnlyCurrentLine";
 
     type SkipWordsResponse = {
         skipWithPreviousLines: string[],
+        skipWithNextLines: string[],
         skipOnlyCurrentLine: string[]
     }
     const [skipWords, setSkipWords] = useState<SkipWordsResponse>({
         skipWithPreviousLines: [],
+        skipWithNextLines: [],
         skipOnlyCurrentLine: []
     })
     const [inputs, setInputs] = useState<Record<SkipWordsType, string>>({
         skipWithPreviousLines: "",
+        skipWithNextLines: "",
         skipOnlyCurrentLine: ""
     })
     type DeleteTarget = {
@@ -132,6 +135,11 @@ export const SkipWordsList = () => {
                 {renderSection(
                     "skipWithPreviousLines",
                     "skipWithPreviousLines"
+                )}
+
+                {renderSection(
+                    "skipWithNextLines",
+                    "skipWithNextLines"
                 )}
 
                 {renderSection(
