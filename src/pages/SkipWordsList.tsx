@@ -123,13 +123,13 @@ export const SkipWordsList = () => {
                             }))
                         }
                 />
-                <Button onClick={() => handleAddWord(type)}>追加</Button>
+                <Button className="cursor-pointer" onClick={() => handleAddWord(type)}>追加</Button>
             </div>
         </div>
     )
 
     return (
-        <>
+        <div className="w-full p-5 sm:p-8">
             <h1>スキップ単語リスト</h1>
             <div className="space-y-6">
                 {renderSection(
@@ -155,17 +155,15 @@ export const SkipWordsList = () => {
                             <AlertDialogMedia className="bg-destructive/10 text-destructive">
                                 <Trash2Icon className="size-5 text-destructive" />
                             </AlertDialogMedia>
-
                             <AlertDialogTitle>【{deleteTarget?.word}】を削除しますか?</AlertDialogTitle>
                         </AlertDialogHeader>
-
                         <AlertDialogFooter>
-                            <AlertDialogCancel variant="outline">キャンセル</AlertDialogCancel>
-                            <AlertDialogAction variant="destructive" onClick={handleDeleteSkipWord}>削除</AlertDialogAction>
+                            <AlertDialogCancel className="cursor-pointer" variant="outline">キャンセル</AlertDialogCancel>
+                            <AlertDialogAction className="cursor-pointer" variant="destructive" onClick={handleDeleteSkipWord}>削除</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
-        </>
+        </div>
     )
 }
