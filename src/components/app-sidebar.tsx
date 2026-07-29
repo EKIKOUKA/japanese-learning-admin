@@ -29,7 +29,12 @@ const items = [
         title: "スキップ単語リスト",
         url: "/skip_words_list",
         icon: Filter
-    }
+    },
+    {
+        title: "日本語文法リスト",
+        url: "/grammar_list",
+        icon: Filter
+    },
 ]
 
 export function AppSidebar() {

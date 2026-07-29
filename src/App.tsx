@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
 import { Dashboard } from "./pages/Dashboard.tsx";
+import { MainLayout } from "@/layouts/MainLayout.tsx";
 import { Videos } from "@/pages/Videos.tsx";
 import { SkipWordsList } from "@/pages/SkipWordsList.tsx";
-import { MainLayout } from "@/layouts/MainLayout.tsx";
+import { GrammarList } from "@/pages/GrammarList.tsx";
 
 function App() {
 
@@ -14,6 +15,7 @@ function App() {
                   <Route index element={<Dashboard />} />
                   <Route path="videos" element={<Videos />} />
                   <Route path="skip_words_list" element={<SkipWordsList />} />
+                  <Route path="grammar_list" element={<GrammarList />} />
               </Route>
           </Routes>
       </BrowserRouter>

@@ -239,65 +239,71 @@ export function Videos() {
                     <div className="overflow-x-auto">
                         <table className="text-sm" style={{width: table.getTotalSize(), minWidth: "100%"}}>
                             <thead className="border-b bg-muted/40 text-left text-muted-foreground">
-                                {table.getHeaderGroups().map(headerGroup => (
-                                    <tr key={headerGroup.id}>
-                                        {headerGroup.headers.map(header => (
-                                            <th
-                                                key={header.id}
-                                                className={`relative px-4 py-3 font-medium whitespace-nowrap ${header.column.id === "actions" ? "sticky right-0 z-20 bg-muted/40 text-right shadow-[-1px_0_0_var(--border)]" : ""}`}
-                                                style={{width: header.getSize()}}
-                                            >
-                                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                ))}
+                                {
+                                    table.getHeaderGroups().map(headerGroup => (
+                                        <tr key={headerGroup.id}>
+                                            {headerGroup.headers.map(header => (
+                                                <th
+                                                    key={header.id}
+                                                    className={`relative px-4 py-3 font-medium whitespace-nowrap ${header.column.id === "actions" ? "sticky right-0 z-20 bg-muted/40 text-right shadow-[-1px_0_0_var(--border)]" : ""}`}
+                                                    style={{width: header.getSize()}}
+                                                >
+                                                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    ))
+                                }
                             </thead>
                             <tbody className="divide-y">
-                                {isLoading ? (
-                                    <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">読み込み中…</td></tr>
-                                ) : loadError ? (
-                                    <tr><td colSpan={11} className="px-4 py-12 text-center"><p className="mb-3 text-destructive">{loadError}</p><Button variant="outline" onClick={() => void loadVideos()}>再読み込み</Button></td></tr>
-                                ) : table.getRowModel().rows.length === 0 ? (
-                                    <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">該当する動画はありません。</td></tr>
-                                ) : table.getRowModel().rows.map(row => (
-                                    <tr key={row.id} className="hover:bg-muted/30">
-                                        {row.getVisibleCells().map(cell => (
-                                            <td
-                                                key={cell.id}
-                                                className={`px-4 py-3 align-middle ${cell.column.id === "actions" ? "sticky right-0 z-10 bg-card text-right shadow-[-1px_0_0_var(--border)] group-hover:bg-muted/30" : ""}`}
-                                                style={{width: cell.column.getSize()}}
-                                            >
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
+                                {
+                                    isLoading ? (
+                                        <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">読み込み中…</td></tr>
+                                    ) : loadError ? (
+                                        <tr><td colSpan={11} className="px-4 py-12 text-center"><p className="mb-3 text-destructive">{loadError}</p><Button variant="outline" onClick={() => void loadVideos()}>再読み込み</Button></td></tr>
+                                    ) : table.getRowModel().rows.length === 0 ? (
+                                        <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">該当する動画はありません。</td></tr>
+                                    ) : table.getRowModel().rows.map(row => (
+                                        <tr key={row.id} className="hover:bg-muted/30">
+                                            {row.getVisibleCells().map(cell => (
+                                                <td
+                                                    key={cell.id}
+                                                    className={`px-4 py-3 align-middle ${cell.column.id === "actions" ? "sticky right-0 z-10 bg-card text-right shadow-[-1px_0_0_var(--border)] group-hover:bg-muted/30" : ""}`}
+                                                    style={{width: cell.column.getSize()}}
+                                                >
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                }
                             </tbody>
                         </table>
                     </div>
 
-                    {!isLoading && !loadError && (
-                        <div className="flex flex-col gap-3 border-t p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
-                            <span className="text-muted-foreground">
-                                {firstResult}–{lastResult} / {table.getFilteredRowModel().rows.length} 件
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <Button size="sm" variant="outline" className="cursor-pointer"
-                                    onClick={() => table.previousPage()}
-                                    disabled={!table.getCanPreviousPage()}
-                                ><ChevronLeft /> 前へ</Button>
-                                <span className="min-w-16 text-center text-muted-foreground">
-                                    {table.getState().pagination.pageIndex + 1} / {Math.max(table.getPageCount(), 1)}
+                    {
+                        !isLoading && !loadError && (
+                            <div className="flex flex-col gap-3 border-t p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+                                <span className="text-muted-foreground">
+                                    {firstResult}–{lastResult} / {table.getFilteredRowModel().rows.length} 件
                                 </span>
-                                <Button size="sm" variant="outline" className="cursor-pointer"
-                                    onClick={() => table.nextPage()}
-                                    disabled={!table.getCanNextPage()}
-                                >次へ <ChevronRight />
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    <Button size="sm" variant="outline" className="cursor-pointer"
+                                        onClick={() => table.previousPage()}
+                                        disabled={!table.getCanPreviousPage()}
+                                    ><ChevronLeft /> 前へ</Button>
+                                    <span className="min-w-16 text-center text-muted-foreground">
+                                        {table.getState().pagination.pageIndex + 1} / {Math.max(table.getPageCount(), 1)}
+                                    </span>
+                                    <Button size="sm" variant="outline" className="cursor-pointer"
+                                        onClick={() => table.nextPage()}
+                                        disabled={!table.getCanNextPage()}
+                                    >次へ <ChevronRight />
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )
+                    }
                 </div>
             </div>
 
