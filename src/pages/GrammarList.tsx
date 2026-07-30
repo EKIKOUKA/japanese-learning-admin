@@ -20,17 +20,6 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import {ChevronLeft, ChevronRight, Pencil} from "lucide-react";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogMedia,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const PAGE_SIZE = 10;
 
