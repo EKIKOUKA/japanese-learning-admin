@@ -1,41 +1,62 @@
-import { getGrammarList } from '@/api/grammar_list.tsx'
-import {useEffect, useMemo, useState} from "react";
+import { getGrammarList, type GrammarItem } from '@/api/grammar_list.tsx'
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {
+    type ColumnDef,
     flexRender,
     getCoreRowModel,
     getPaginationRowModel,
     type PaginationState,
     useReactTable
 } from "@tanstack/react-table";
+import {Dialog as DialogPrimitive} from "radix-ui";
 import {Button} from "@/components/ui/button.tsx";
+import {Input} from "@/components/ui/input.tsx";
 import {
     Select,
     SelectContent,
     SelectGroup,
     SelectItem,
-    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import {ChevronLeft, ChevronRight, Pencil, Trash2} from "lucide-react";
+import {ChevronLeft, ChevronRight, Pencil} from "lucide-react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogMedia,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const PAGE_SIZE = 10;
 
 export function GrammarList() {
-    const [list, setList] = useState([]);
+    const [list, setList] = useState<GrammarItem[]>([]);
+    const [selectedLevel, setSelectedLevel] = useState<string>("N1");
+    const [editingGrammar, setEditingGrammar] = useState<GrammarItem | null>(null);
     const [pagination, setPagination] = useState<PaginationState>({pageIndex: 0, pageSize: PAGE_SIZE});
 
     const levelItems = [
-        { label: "文法レベル", value: null },
+        { label: "全部", value: "all" },
         { label: "N1", value: "N1" },
-        { label: "Apple", value: "apple" },
-        { label: "Banana", value: "banana" },
-        { label: "Blueberry", value: "blueberry" },
-        { label: "Grapes", value: "grapes" },
-        { label: "Pineapple", value: "pineapple" },
+        { label: "N2", value: "N2" },
+        { label: "N3", value: "N3" },
+        { label: "N4", value: "N4" },
+        { label: "N5", value: "N5" },
+        { label: "その他", value: "Other" }
     ]
 
-    const columns = [
+    const handleEdit = useCallback((item: GrammarItem) => {
+        console.log(item);
+        console.log(selectedLevel)
+        setEditingGrammar(item);
+    }, []);
+
+    const columns = useMemo<ColumnDef<GrammarItem>[]>(() => [
         {
             accessorKey: "id",
             header: "ID",
@@ -70,19 +91,17 @@ export function GrammarList() {
         }, {
             id: "actions",
             header: () => <div className="span-text-align-center">操作</div>,
-            maxSize: 120,
+            maxSize: 60,
             cell: ({row}) => (
                 <div className="flex justify-end gap-1">
-                    <Button className="cursor-pointer" size="icon-sm">
+                    <Button className="cursor-pointer" size="icon-sm" onClick={() => handleEdit(row.original)}>
                         <Pencil />
-                    </Button>
-                    <Button size="icon-sm" className="cursor-pointer text-destructive hover:text-destructive">
-                        <Trash2 />
                     </Button>
                 </div>
             )
         }
-    ]
+    ], [handleEdit]);
+
     const table = useReactTable({
         data: list,
         columns,
@@ -113,13 +132,14 @@ export function GrammarList() {
                     <div className="flex flex-col gap-3 boarder-b p-4 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-sm text-muted-foreground">全 {list.length} 件</p>
                         <div className="relative w-full sm:w-80">
-                            <Select items={levelItems}>
+                            {/*items={levelItems}*/}
+                            <Select value={selectedLevel} onValueChange={setSelectedLevel}>
                                 <SelectTrigger className="w-full max-w-48">
-                                    <SelectValue />
+                                    <SelectValue placeholder="文法ラベル" />
                                 </SelectTrigger>
+
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectLabel>文法レベル</SelectLabel>
                                         {levelItems.map((item) => (
                                             <SelectItem key={item.value} value={item.value}>
                                                 {item.label}
@@ -195,6 +215,27 @@ export function GrammarList() {
                     </div>
                 </div>
             </div>
+
+            <DialogPrimitive.Root open={editingGrammar !== null}>
+                <DialogPrimitive.Portal>
+                    <DialogPrimitive.Overlay />
+                    <DialogPrimitive.Content>
+                        <form>
+                            <div>
+                                {([
+                                    ["playlist_id", "プレイリスト ID", "text"],
+                                    ["status", "ステータス", "text"],
+                                ] as const).map(([field, label, type]) => (
+                                    <label key={field}>
+                                        <span>{label}</span>
+                                        <Input type={type} />
+                                    </label>
+                                ))}
+                            </div>
+                        </form>
+                    </DialogPrimitive.Content>
+                </DialogPrimitive.Portal>
+            </DialogPrimitive.Root>
         </div>
     )
 }

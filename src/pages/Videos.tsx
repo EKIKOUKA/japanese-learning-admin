@@ -8,7 +8,7 @@ import {
     type PaginationState,
 } from "@tanstack/react-table";
 import {deleteVideo, getVideos, updateVideo, type Video, type VideoChanges} from "@/api/videos.tsx";
-import {useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {toast} from "sonner";
 import {ChevronLeft, ChevronRight, Pencil, Search, Trash2, X} from "lucide-react";
 import {Dialog as DialogPrimitive} from "radix-ui";
@@ -73,10 +73,10 @@ export function Videos() {
         setPagination(current => ({...current, pageIndex: 0}));
     }, [globalFilter]);
 
-    const startEditing = (video: Video) => {
+    const startEditing = useCallback((video: Video) => {
         setEditingVideo(video);
         setDraft(toDraft(video));
-    };
+    }, []);
 
     const cancelEditing = () => {
         setEditingVideo(null);
@@ -202,7 +202,7 @@ export function Videos() {
                 </div>
             )
         }
-    ], []);
+    ], [startEditing]);
 
     const table = useReactTable({
         data: videos,

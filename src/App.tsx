@@ -5,6 +5,7 @@ import { MainLayout } from "@/layouts/MainLayout.tsx";
 import { Videos } from "@/pages/Videos.tsx";
 import { SkipWordsList } from "@/pages/SkipWordsList.tsx";
 import { GrammarList } from "@/pages/GrammarList.tsx";
+import { Idioms } from "@/pages/Idioms.tsx";
 
 function App() {
 
@@ -16,6 +17,7 @@ function App() {
                   <Route path="videos" element={<Videos />} />
                   <Route path="skip_words_list" element={<SkipWordsList />} />
                   <Route path="grammar_list" element={<GrammarList />} />
+                  <Route path="others/idioms" element={<Idioms />} />
               </Route>
           </Routes>
       </BrowserRouter>
