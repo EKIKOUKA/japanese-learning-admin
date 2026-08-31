@@ -6,6 +6,7 @@ export type Video = {
     created_at: string;
     current_time: number;
     rate: number;
+    category_id: string;
     playlist_id: string | null;
     status: string;
     content_language: string;
@@ -14,9 +15,20 @@ export type Video = {
 
 export type VideoChanges = Omit<Video, "id" | "created_at">;
 
+export type PlaylistCategory = {
+    id: string;
+    title: string;
+};
+
 export async function getVideos(): Promise<Video[]> {
     const response = await fetch(`${API_BASE_URL}/fetch_videos`);
     if (!response.ok) throw new Error("Failed to load videos");
+    return response.json();
+}
+
+export async function getPlaylistCategories(): Promise<PlaylistCategory[]> {
+    const response = await fetch(`${API_BASE_URL}/fetch_playlist_categories`);
+    if (!response.ok) throw new Error("Failed to load playlist categories");
     return response.json();
 }
 

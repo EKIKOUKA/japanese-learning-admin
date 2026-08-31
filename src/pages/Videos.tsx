@@ -7,13 +7,22 @@ import {
     type ColumnDef,
     type PaginationState,
 } from "@tanstack/react-table";
-import {deleteVideo, getVideos, updateVideo, type Video, type VideoChanges} from "@/api/videos.tsx";
+import {
+    deleteVideo,
+    getPlaylistCategories,
+    getVideos,
+    updateVideo,
+    type PlaylistCategory,
+    type Video,
+    type VideoChanges
+} from "@/api/videos.tsx";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {toast} from "sonner";
 import {ChevronLeft, ChevronRight, Pencil, Search, Trash2, X} from "lucide-react";
 import {Dialog as DialogPrimitive} from "radix-ui";
 import {Button} from "@/components/ui/button.tsx";
 import {Input} from "@/components/ui/input.tsx";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -34,6 +43,7 @@ const toDraft = (video: Video): VideoDraft => ({
     title: video.title ?? "",
     current_time: String(video.current_time),
     rate: String(video.rate),
+    category_id: video.category_id ?? "",
     playlist_id: video.playlist_id ?? "",
     status: video.status,
     content_language: video.content_language,
@@ -42,6 +52,7 @@ const toDraft = (video: Video): VideoDraft => ({
 
 export function Videos() {
     const [videos, setVideos] = useState<Video[]>([]);
+    const [categories, setCategories] = useState<PlaylistCategory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [globalFilter, setGlobalFilter] = useState("");
@@ -57,7 +68,9 @@ export function Videos() {
         setLoadError(null);
 
         try {
-            setVideos(await getVideos());
+            const [loadedVideos, loadedCategories] = await Promise.all([getVideos(), getPlaylistCategories()]);
+            setVideos(loadedVideos);
+            setCategories(loadedCategories);
         } catch {
             setLoadError("動画の読み込みに失敗しました。もう一度お試しください。");
         } finally {
@@ -98,6 +111,7 @@ export function Videos() {
                 title,
                 current_time: Number(draft.current_time),
                 rate: Number(draft.rate),
+                category_id: draft.category_id,
                 playlist_id: draft.playlist_id.trim() || null,
                 status: draft.status.trim(),
                 content_language: draft.content_language.trim(),
@@ -140,6 +154,11 @@ export function Videos() {
         setDraft(current => current ? {...current, [field]: value} : current);
     };
 
+    const categoryTitles = useMemo(
+        () => new Map(categories.map(category => [category.id, category.title])),
+        [categories]
+    );
+
     const columns = useMemo<ColumnDef<Video>[]>(() => [
         {
             accessorKey: "id",
@@ -178,6 +197,12 @@ export function Videos() {
             cell: ({row}) => <span>{row.original.status}</span>,
         },
         {
+            accessorKey: "category_id",
+            header: "カテゴリ",
+            minSize: 180,
+            cell: ({row}) => <span>{categoryTitles.get(row.original.category_id) ?? row.original.category_id}</span>,
+        },
+        {
             accessorKey: "playlist_id",
             header: "プレイリスト ID",
             cell: ({row}) => <span>{row.original.playlist_id}</span>,
@@ -202,7 +227,7 @@ export function Videos() {
                 </div>
             )
         }
-    ], [startEditing]);
+    ], [categoryTitles, startEditing]);
 
     const table = useReactTable({
         data: videos,
@@ -349,6 +374,22 @@ export function Videos() {
                                         onChange={event => updateDraft("title", event.target.value)}
                                         autoFocus
                                     />
+                                </label>
+                                <label className="space-y-1.5">
+                                    <span className="text-sm font-medium">カテゴリ</span>
+                                    <Select
+                                        value={draft?.category_id ?? ""}
+                                        onValueChange={value => updateDraft("category_id", value)}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="カテゴリを選択" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {categories.map(category => (
+                                                <SelectItem key={category.id} value={category.id}>{category.title}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </label>
                                 {([
                                     ["playlist_id", "プレイリスト ID", "text"],
