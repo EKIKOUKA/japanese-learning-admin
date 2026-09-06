@@ -1,9 +1,9 @@
-import { getGrammarList, type GrammarItem } from '@/api/grammar_list.tsx'
+import {getGrammarList, updateGrammar, type GrammarItem} from '@/api/grammar_list.tsx'
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {
     type ColumnDef,
     flexRender,
-    getCoreRowModel,
+    getCoreRowModel, getFilteredRowModel,
     getPaginationRowModel,
     type PaginationState,
     useReactTable
@@ -11,6 +11,8 @@ import {
 import {Dialog as DialogPrimitive} from "radix-ui";
 import {Button} from "@/components/ui/button.tsx";
 import {Input} from "@/components/ui/input.tsx";
+import {Switch} from "@/components/ui/switch.tsx";
+import {toast} from "sonner";
 import {
     Select,
     SelectContent,
@@ -19,18 +21,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import {ChevronLeft, ChevronRight, Pencil} from "lucide-react";
+import {ChevronLeft, ChevronRight, Pencil, Search, X} from "lucide-react";
 
 const PAGE_SIZE = 10;
 
 export function GrammarList() {
     const [list, setList] = useState<GrammarItem[]>([]);
+    const [globalFilter, setGlobalFilter] = useState("");
     const [selectedLevel, setSelectedLevel] = useState<string>("N1");
     const [editingGrammar, setEditingGrammar] = useState<GrammarItem | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
     const [pagination, setPagination] = useState<PaginationState>({pageIndex: 0, pageSize: PAGE_SIZE});
 
     const levelItems = [
-        { label: "全部", value: "all" },
         { label: "N1", value: "N1" },
         { label: "N2", value: "N2" },
         { label: "N3", value: "N3" },
@@ -40,10 +43,34 @@ export function GrammarList() {
     ]
 
     const handleEdit = useCallback((item: GrammarItem) => {
-        console.log(item);
-        console.log(selectedLevel)
         setEditingGrammar(item);
     }, []);
+
+    const updateEditingGrammar = (field: keyof GrammarItem, value: string | number) => {
+        setEditingGrammar(current => current ? {...current, [field]: value} : current);
+    };
+
+    const saveGrammar = async () => {
+        if (!editingGrammar) return;
+
+        setIsSaving(true);
+        try {
+            await updateGrammar(editingGrammar);
+            setList(current => current.map(item =>
+                item.id === editingGrammar.id ? editingGrammar : item
+            ));
+            toast.success("文法情報を更新しました。", {position: "top-center"});
+            setEditingGrammar(null);
+        } catch {
+            toast.error("更新に失敗しました。", {position: "top-center"});
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    useEffect(() => {
+        setPagination(current => ({...current, pageIndex: 0}));
+    }, [globalFilter]);
 
     const columns = useMemo<ColumnDef<GrammarItem>[]>(() => [
         {
@@ -59,24 +86,32 @@ export function GrammarList() {
             header: "文型",
             cell: ({ row }) => <span>{row.original.title}</span>,
         }, {
-            accessorKey: "connection",
-            header: "接続",
-            minSize: 200,
-            cell: ({ row }) => <span>{row.original.connection}</span>,
-        }, {
             accessorKey: "meaning",
             header: "説明",
             minSize: 200,
-            cell: ({ row }) => <span>{row.original.meaning}</span>,
+            cell: ({ row }) => <span className="whitespace-pre-wrap break-words">{row.original.meaning}</span>,
         }, {
+            accessorKey: "connection",
+            header: "接続",
+            minSize: 200,
+            cell: ({ row }) => <span className="whitespace-pre-wrap break-words">{row.original.connection}</span>,
+        },  {
             accessorKey: "examples",
             header: "例文",
             minSize: 500,
-            cell: ({ row }) => <span>{row.original.examples}</span>,
+            cell: ({ row }) => <span className="whitespace-pre-wrap break-words">{row.original.examples}</span>,
         }, {
             accessorKey: "notes",
             header: "メモ",
-            cell: ({ row }) => <span>{row.original.notes}</span>,
+            cell: ({ row }) => <span className="whitespace-pre-wrap break-words">{row.original.notes}</span>,
+        },  {
+            accessorKey: "is_important",
+            header: "重要",
+            cell: ({ row }) => <Switch checked={row.original.is_important === 1} disabled aria-label="重要" />,
+        },  {
+            accessorKey: "is_marked",
+            header: "マーク",
+            cell: ({ row }) => <Switch checked={row.original.is_marked === 1} disabled aria-label="マーク" />,
         }, {
             id: "actions",
             header: () => <div className="span-text-align-center">操作</div>,
@@ -94,10 +129,13 @@ export function GrammarList() {
     const table = useReactTable({
         data: list,
         columns,
-        state: { pagination },
+        state: { globalFilter, pagination },
+        onGlobalFilterChange: setGlobalFilter,
         onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel()
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        globalFilterFn: "includesString"
     })
 
     const firstResult = list.length === 0 ? 0 :pagination.pageIndex * pagination.pageSize + 1;
@@ -119,9 +157,7 @@ export function GrammarList() {
 
                 <div className="rounded-xl border bg-card shadow-sm">
                     <div className="flex flex-col gap-3 boarder-b p-4 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-sm text-muted-foreground">全 {list.length} 件</p>
                         <div className="relative w-full sm:w-80">
-                            {/*items={levelItems}*/}
                             <Select value={selectedLevel} onValueChange={setSelectedLevel}>
                                 <SelectTrigger className="w-full max-w-48">
                                     <SelectValue placeholder="文法ラベル" />
@@ -129,6 +165,7 @@ export function GrammarList() {
 
                                 <SelectContent>
                                     <SelectGroup>
+                                        <SelectItem key="all" value="all">全部</SelectItem>
                                         {levelItems.map((item) => (
                                             <SelectItem key={item.value} value={item.value}>
                                                 {item.label}
@@ -137,6 +174,10 @@ export function GrammarList() {
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="relative w-full sm:w-60">
+                            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input className="pl-8" placeholder="ID またはタイトルで検索" value={globalFilter} onChange={event => setGlobalFilter(event.target.value)} />
                         </div>
                     </div>
 
@@ -205,21 +246,102 @@ export function GrammarList() {
                 </div>
             </div>
 
-            <DialogPrimitive.Root open={editingGrammar !== null}>
+            <DialogPrimitive.Root
+                open={editingGrammar !== null}
+                onOpenChange={open => !open && setEditingGrammar(null)}
+            >
                 <DialogPrimitive.Portal>
-                    <DialogPrimitive.Overlay />
-                    <DialogPrimitive.Content>
-                        <form>
-                            <div>
+                    <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-[1px]" />
+                    <DialogPrimitive.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-xl bg-popover text-popover-foreground shadow-xl outline-none">
+                        <form onSubmit={event => { event.preventDefault(); void saveGrammar(); }}>
+                            <div className="flex items-start justify-between border-b p-5">
+                                <div>
+                                    <DialogPrimitive.Title className="text-lg font-semibold">文法を編集</DialogPrimitive.Title>
+                                    <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">
+                                        ID: {editingGrammar?.id}
+                                    </DialogPrimitive.Description>
+                                </div>
+                                <DialogPrimitive.Close asChild>
+                                    <Button type="button" size="icon-sm" variant="ghost" className="cursor-pointer" aria-label="閉じる">
+                                        <X />
+                                    </Button>
+                                </DialogPrimitive.Close>
+                            </div>
+                            <div className="grid max-h-[65vh] grid-cols-1 gap-4 overflow-y-auto p-5 sm:grid-cols-2">
+                                <label className="space-y-1.5">
+                                    <span className="text-sm font-medium">レベル</span>
+                                    <Select value={editingGrammar?.level ?? ""} onValueChange={value => updateEditingGrammar("level", value)}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="文法ラベル" />
+                                        </SelectTrigger>
+
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {levelItems.map((item) => (
+                                                    <SelectItem key={item.value} value={item.value}>
+                                                        {item.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </label>
+                                <label className="space-y-1.5">
+                                    <span className="text-sm font-medium">文型</span>
+                                    <Input
+                                        value={editingGrammar?.title ?? ""}
+                                        onChange={event => updateEditingGrammar("title", event.target.value)}
+                                    />
+                                </label>
                                 {([
-                                    ["playlist_id", "プレイリスト ID", "text"],
-                                    ["status", "ステータス", "text"],
-                                ] as const).map(([field, label, type]) => (
-                                    <label key={field}>
-                                        <span>{label}</span>
-                                        <Input type={type} />
+                                    ["connection", "接続"],
+                                    ["meaning", "説明"],
+                                ] as const).map(([field, label]) => (
+                                    <label key={field} className="space-y-1.5 sm:col-span-2">
+                                        <span className="text-sm font-medium">{label}</span>
+                                        <textarea
+                                            className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-20 w-full resize-y rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+                                            value={editingGrammar?.[field] ?? ""}
+                                            onChange={event => updateEditingGrammar(field, event.target.value)}
+                                        />
                                     </label>
                                 ))}
+                                <label className="space-y-1.5 sm:col-span-2">
+                                    <span className="text-sm font-medium">例文</span>
+                                    <textarea
+                                        className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-44 w-full resize-y rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+                                        value={editingGrammar?.examples ?? ""}
+                                        onChange={event => updateEditingGrammar("examples", event.target.value)}
+                                    />
+                                </label>
+                                <label className="space-y-1.5 sm:col-span-2">
+                                    <span className="text-sm font-medium">メモ</span>
+                                    <textarea
+                                        className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-10 w-full resize-y rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+                                        value={editingGrammar?.notes ?? ""}
+                                        onChange={event => updateEditingGrammar("notes", event.target.value)}
+                                    />
+                                </label>
+                                <label className="space-y-1.5 flex cursor-pointer items-center gap-3">
+                                    <span className="text-sm font-medium">重要</span>
+                                    <Switch checked={editingGrammar?.is_important === 1}
+                                        onCheckedChange={checked => updateEditingGrammar("is_important", checked ? 1 : 0)}
+                                    />
+                                </label>
+                                <label className="space-y-1.5 flex cursor-pointer items-center gap-3">
+                                    <span className="text-sm font-medium">マーク</span>
+                                    <Switch checked={editingGrammar?.is_marked === 1}
+                                        onCheckedChange={checked => updateEditingGrammar("is_marked", checked ? 1 : 0)}
+                                    />
+                                </label>
+                            </div>
+                            <div className="flex justify-end gap-2 border-t p-4">
+                                <DialogPrimitive.Close asChild>
+                                    <Button type="button" variant="outline" className="cursor-pointer" disabled={isSaving}>キャンセル</Button>
+                                </DialogPrimitive.Close>
+                                <Button type="submit" className="cursor-pointer" disabled={isSaving}>
+                                    {isSaving ? "保存中…" : "保存"}
+                                </Button>
                             </div>
                         </form>
                     </DialogPrimitive.Content>

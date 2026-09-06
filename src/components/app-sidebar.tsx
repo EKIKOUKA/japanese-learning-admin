@@ -1,3 +1,4 @@
+import { useLocation, Link } from "react-router-dom"
 import {
     Sidebar,
     SidebarContent,
@@ -22,30 +23,39 @@ import {
 
 import { ChevronRight, Home, Film, Filter } from "lucide-react";
 
-import { NavLink } from "react-router-dom"
-
 const items = [
     {
         title: "ホーム",
         url: "/",
         icon: Home
-    },
-    {
-        title: "動画リスト",
-        url: "/videos",
-        icon: Film
-    },
-    {
-        title: "スキップ単語リスト",
-        url: "/skip_words_list",
-        icon: Filter
-    },
-    {
+    }, {
+        title: "シャドーイング",
+        url: "",
+        icon: Film,
+        children: [
+            {
+                title: "カテゴリ",
+                url: "/shadowing/category",
+                icon: Film
+            }, {
+                title: "動画の追加再生リスト",
+                url: "/shadowing/playlist",
+                icon: Film
+            }, {
+                title: "動画リスト",
+                url: "/shadowing/videos",
+                icon: Film
+            }, {
+                title: "スキップ単語リスト",
+                url: "/shadowing/skip_words_list",
+                icon: Filter
+            }
+        ]
+    }, {
         title: "日本語文法リスト",
         url: "/grammar_list",
         icon: Filter
-    },
-    {
+    }, {
         title: "その他",
         url: "",
         icon: Filter,
@@ -54,24 +64,32 @@ const items = [
                 title: "慣用句",
                 url: "/others/Idioms",
                 icon: Filter
+            }, {
+                title: "映像作品リスト",
+                url: "/others/media_products",
+                icon: Filter
             }
         ]
     }
 ]
 
 export function AppSidebar() {
+    const { pathname } = useLocation()
+
     return (
         <Sidebar collapsible="icon">
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel>
-                        Japanese Learning
-                    </SidebarGroupLabel>
+                    <SidebarGroupLabel>管理システム</SidebarGroupLabel>
 
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {
                                 items.map((item) => {
+                                    const isParentActive = item.children?.some(
+                                        (child) => pathname === child.url
+                                    )
+
                                     if (item.children?.length) {
                                         return (
                                             <Collapsible
@@ -82,7 +100,7 @@ export function AppSidebar() {
                                             >
                                                 <SidebarMenuItem>
                                                     <CollapsibleTrigger asChild>
-                                                        <SidebarMenuButton>
+                                                        <SidebarMenuButton isActive={isParentActive}>
                                                             <item.icon />
                                                             <span>{item.title}</span>
                                                             <ChevronRight
@@ -98,16 +116,20 @@ export function AppSidebar() {
 
                                                     <CollapsibleContent>
                                                         <SidebarMenuSub>
-                                                            {item.children.map((child) => (
-                                                                <SidebarMenuSubItem key={child.title}>
-                                                                    <SidebarMenuSubButton asChild>
-                                                                        <NavLink to={child.url}>
-                                                                            <child.icon />
-                                                                            <span>{child.title}</span>
-                                                                        </NavLink>
-                                                                    </SidebarMenuSubButton>
-                                                                </SidebarMenuSubItem>
-                                                            ))}
+                                                            {item.children.map((child) => {
+                                                                const isChildActive = pathname === child.url
+
+                                                                return (
+                                                                    <SidebarMenuSubItem key={child.title}>
+                                                                        <SidebarMenuSubButton isActive={isChildActive} asChild>
+                                                                            <Link to={child.url}>
+                                                                                <child.icon/>
+                                                                                <span>{child.title}</span>
+                                                                            </Link>
+                                                                        </SidebarMenuSubButton>
+                                                                    </SidebarMenuSubItem>
+                                                                )
+                                                            })}
                                                         </SidebarMenuSub>
                                                     </CollapsibleContent>
                                                 </SidebarMenuItem>
@@ -115,13 +137,15 @@ export function AppSidebar() {
                                         )
                                     }
 
+                                    const isSingleActive = item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)
+
                                     return (
                                         <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild>
-                                                <NavLink to={item.url}>
+                                            <SidebarMenuButton isActive={isSingleActive} asChild>
+                                                <Link to={item.url}>
                                                     <item.icon />
                                                     <span>{item.title}</span>
-                                                </NavLink>
+                                                </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
                                     )

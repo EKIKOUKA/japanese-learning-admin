@@ -8,69 +8,61 @@ import {
     type PaginationState,
 } from "@tanstack/react-table";
 import {
-    deleteVideo,
-    getPlaylistCategories,
-    getVideos,
-    updateVideo,
-    type PlaylistCategory,
-    type Video,
-    type VideoChanges
-} from "@/api/videos.tsx";
+    getMediaProducts,
+    addMediaProduct,
+    updateMediaProduct,
+    type MediaProduct,
+    type MediaProductChanges
+} from "@/api/media_products.tsx";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {toast} from "sonner";
-import {ChevronLeft, ChevronRight, Pencil, Search, Trash2, X} from "lucide-react";
+import {ChevronLeft, ChevronRight, Pencil, Search, X, Plus} from "lucide-react";
 import {Dialog as DialogPrimitive} from "radix-ui";
 import {Button} from "@/components/ui/button.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogMedia,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const PAGE_SIZE = 10;
+type MediaProductDraft = Record<keyof MediaProductChanges, string>;
 
-type VideoDraft = Record<keyof VideoChanges, string>;
-
-const toDraft = (video: Video): VideoDraft => ({
-    title: video.title ?? "",
-    current_time: String(video.current_time),
-    rate: String(video.rate),
-    category_id: video.category_id ?? "",
-    playlist_id: video.playlist_id ?? "",
-    status: video.status,
-    content_language: video.content_language,
-    aspect_ratio: String(video.aspect_ratio)
+const toDraft = (mediaProduct: MediaProduct): MediaProductDraft => ({
+    title: mediaProduct.title ?? "",
+    category: mediaProduct.category,
+    details_url: mediaProduct.details_url ?? "",
+    memo: mediaProduct.memo ?? ""
 });
 
-export function Videos() {
-    const [videos, setVideos] = useState<Video[]>([]);
-    const [categories, setCategories] = useState<PlaylistCategory[]>([]);
+export function MediaProducts() {
+    const [mediaProducts, setMediaProducts] = useState<MediaProduct[]>([]);
+    const [categories] = useState([
+        {
+            key: "drama",
+            value: "ドラマ"
+        }, {
+            key: "anime",
+            value: "アニメ"
+        }, {
+            key: "movie",
+            value: "映画"
+        }
+    ]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [globalFilter, setGlobalFilter] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState("all");
     const [pagination, setPagination] = useState<PaginationState>({pageIndex: 0, pageSize: PAGE_SIZE});
-    const [editingVideo, setEditingVideo] = useState<Video | null>(null);
-    const [draft, setDraft] = useState<VideoDraft | null>(null);
-    const [deleteTarget, setDeleteTarget] = useState<Video | null>(null);
+    const [editingVideo, setEditingVideo] = useState<MediaProduct | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
+    const [draft, setDraft] = useState<MediaProductDraft | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
 
-    const loadVideos = async () => {
+    const loadMediaProducts = async () => {
         setIsLoading(true);
         setLoadError(null);
 
         try {
-            const [loadedVideos, loadedCategories] = await Promise.all([getVideos(), getPlaylistCategories()]);
-            setVideos(loadedVideos);
-            setCategories(loadedCategories);
+            const loadedMediaProducts = await getMediaProducts();
+            setMediaProducts(loadedMediaProducts);
         } catch {
             setLoadError("動画の読み込みに失敗しました。もう一度お試しください。");
         } finally {
@@ -79,25 +71,33 @@ export function Videos() {
     };
 
     useEffect(() => {
-        void loadVideos();
+        void loadMediaProducts();
     }, []);
 
     useEffect(() => {
         setPagination(current => ({...current, pageIndex: 0}));
-    }, [globalFilter]);
+    }, [globalFilter, categoryFilter]);
 
-    const startEditing = useCallback((video: Video) => {
-        setEditingVideo(video);
-        setDraft(toDraft(video));
+    const startEditing = useCallback((mediaProduct: MediaProduct) => {
+        setIsCreating(false);
+        setEditingVideo(mediaProduct);
+        setDraft(toDraft(mediaProduct));
     }, []);
+
+    const startCreating = () => {
+        setEditingVideo(null);
+        setDraft({title: "", category: "drama", details_url: "", memo: ""});
+        setIsCreating(true);
+    };
 
     const cancelEditing = () => {
         setEditingVideo(null);
+        setIsCreating(false);
         setDraft(null);
     };
 
     const saveEdit = async () => {
-        if (!editingVideo || !draft) return;
+        if ((!editingVideo && !isCreating) || !draft) return;
 
         const title = draft.title.trim();
         if (!title) {
@@ -105,17 +105,18 @@ export function Videos() {
             return;
         }
 
+        if (!draft.category) {
+            toast.error("カテゴリを選択してください。", {position: "top-center"});
+            return;
+        }
+
         setIsSaving(true);
         try {
-            const changes: VideoChanges = {
+            const changes: MediaProductChanges = {
                 title,
-                current_time: Number(draft.current_time),
-                rate: Number(draft.rate),
-                category_id: draft.category_id,
-                playlist_id: draft.playlist_id.trim() || null,
-                status: draft.status.trim(),
-                content_language: draft.content_language.trim(),
-                aspect_ratio: Number(draft.aspect_ratio)
+                category: draft.category,
+                details_url: draft.details_url.trim() || null,
+                memo: draft.memo.trim() || null
             };
 
             if (Object.values(changes).some(value => typeof value === "number" && Number.isNaN(value))) {
@@ -123,116 +124,94 @@ export function Videos() {
                 return;
             }
 
-            const updatedVideo = await updateVideo(editingVideo.id, changes);
-            setVideos(current => current.map(video =>
-                video.id === editingVideo.id ? {...video, ...changes, ...updatedVideo} : video
-            ));
-            toast.success("動画情報を更新しました。", {position: "top-center"});
+            if (isCreating) {
+                await addMediaProduct(changes);
+                await loadMediaProducts();
+                toast.success("映像作品を追加しました。", {position: "top-center"});
+            } else if (editingVideo) {
+                const updatedVideo = await updateMediaProduct(editingVideo.id, changes);
+                setMediaProducts(current => current.map(video =>
+                    video.id === editingVideo.id ? {...video, ...changes, ...updatedVideo} : video
+                ));
+                toast.success("動画情報を更新しました。", {position: "top-center"});
+            }
+
             cancelEditing();
         } catch {
-            toast.error("更新に失敗しました。", {position: "top-center"});
+            toast.error(isCreating ? "追加に失敗しました。" : "更新に失敗しました。", {position: "top-center"});
         } finally {
             setIsSaving(false);
         }
     };
 
-    const confirmDelete = async () => {
-        if (!deleteTarget) return;
-
-        setIsDeleting(true);
-        try {
-            await deleteVideo(deleteTarget.id);
-            setVideos(current => current.filter(video => video.id !== deleteTarget.id));
-            toast.success("動画を削除しました。", {position: "top-center"});
-            setDeleteTarget(null);
-        } catch {
-            toast.error("削除に失敗しました。", {position: "top-center"});
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-
-    const updateDraft = (field: keyof VideoDraft, value: string) => {
+    const updateDraft = (field: keyof MediaProductDraft, value: string) => {
         setDraft(current => current ? {...current, [field]: value} : current);
     };
 
     const categoryTitles = useMemo(
-        () => new Map(categories.map(category => [category.id, category.title])),
+        () => new Map(
+            categories.map(
+                category => [category.key, category.value]
+            )
+        ),
         [categories]
     );
 
-    const columns = useMemo<ColumnDef<Video>[]>(() => [
+    const columns = useMemo<ColumnDef<MediaProduct>[]>(() => [
         {
             accessorKey: "id",
             header: "ID",
-            cell: ({row}) => <span className="font-mono text-xs text-muted-foreground">{row.original.id}</span>,
+            cell: ({row}) => <span className="font-mono text-xs text-muted-foreground">{row.original.id}</span>
         },
         {
             accessorKey: "title",
             header: "タイトル",
             minSize: 460,
-            cell: ({row}) => <span className="font-medium text-foreground">{row.original.title}</span>,
+            cell: ({row}) => <span className="font-medium text-foreground">{row.original.title}</span>
         },
         {
-            accessorKey: "current_time",
-            header: "再生位置",
-            cell: ({row}) => <span>{row.original.current_time}</span>,
-        },
-        {
-            accessorKey: "rate",
-            header: "速度",
-            cell: ({row}) => <span>{row.original.rate}</span>,
-        },
-        {
-            accessorKey: "aspect_ratio",
-            header: "画面比率",
-            cell: ({row}) => <span>{row.original.aspect_ratio}</span>,
-        },
-        {
-            accessorKey: "content_language",
-            header: "言語",
-            cell: ({row}) => <span>{row.original.content_language}</span>,
-        },
-        {
-            accessorKey: "status",
-            header: "ステータス",
-            cell: ({row}) => <span>{row.original.status}</span>,
-        },
-        {
-            accessorKey: "category_id",
+            accessorKey: "category",
             header: "カテゴリ",
-            minSize: 180,
-            cell: ({row}) => <span>{categoryTitles.get(row.original.category_id) ?? row.original.category_id}</span>,
+            cell: ({row}) => <span>{categoryTitles.get(row.original.category)}</span>
         },
         {
-            accessorKey: "playlist_id",
-            header: "プレイリスト ID",
-            cell: ({row}) => <span>{row.original.playlist_id}</span>,
+            accessorKey: "details_url",
+            header: "詳細リンク",
+            cell: ({row}) => <span>{row.original.details_url}</span>
+        },
+        {
+            accessorKey: "memo",
+            header: "メモ",
+            cell: ({row}) => <span>{row.original.memo}</span>
         },
         {
             accessorKey: "created_at",
             header: "作成日時",
-            cell: ({row}) => <span className="whitespace-nowrap text-muted-foreground">{row.original.created_at}</span>,
+            cell: ({row}) => <span className="whitespace-nowrap text-muted-foreground">{row.original.created_at}</span>
         },
         {
             id: "actions",
             header: ()=> <div className="span-text-align-center">操作</div>,
-            size: 112, minSize: 112, maxSize: 112,
+            size: 60, minSize: 60, maxSize: 60,
             cell: ({row}) => (
                 <div className="flex justify-end gap-1">
                     <Button className="cursor-pointer" size="icon-sm" variant="ghost" onClick={() => startEditing(row.original)} aria-label={`${row.original.title} を編集`}>
                         <Pencil />
-                    </Button>
-                    <Button size="icon-sm" variant="ghost" className="cursor-pointer text-destructive hover:text-destructive" onClick={() => setDeleteTarget(row.original)} aria-label={`${row.original.title} を削除`}>
-                        <Trash2 />
                     </Button>
                 </div>
             )
         }
     ], [categoryTitles, startEditing]);
 
+    const filteredMediaProducts = useMemo(
+        () => categoryFilter === "all"
+            ? mediaProducts
+            : mediaProducts.filter(product => product.category === categoryFilter),
+        [categoryFilter, mediaProducts]
+    );
+
     const table = useReactTable({
-        data: videos,
+        data: filteredMediaProducts,
         columns,
         state: {globalFilter, pagination},
         onGlobalFilterChange: setGlobalFilter,
@@ -243,23 +222,44 @@ export function Videos() {
         globalFilterFn: "includesString"
     });
 
-    const firstResult = videos.length === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
-    const lastResult = Math.min((pagination.pageIndex + 1) * pagination.pageSize, table.getFilteredRowModel().rows.length);
+    const filteredResultCount = table.getFilteredRowModel().rows.length;
+    const firstResult = filteredResultCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
+    const lastResult = Math.min((pagination.pageIndex + 1) * pagination.pageSize, filteredResultCount);
 
     return (
         <div className="w-full p-5 text-left sm:p-8">
             <div className="mx-auto w-full max-w-none space-y-6">
                 <div>
-                    <h1 className="mb-2 text-3xl font-semibold tracking-tight sm:text-4xl">動画リスト</h1>
+                    <h1 className="mb-2 text-3xl font-semibold tracking-tight sm:text-4xl">映像作品リスト</h1>
                     <p className="text-sm text-muted-foreground">動画の検索、タイトル編集、削除ができます。</p>
                 </div>
 
                 <div className="rounded-xl border bg-card shadow-sm">
                     <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-sm text-muted-foreground">全 {videos.length} 件</p>
-                        <div className="relative w-full sm:w-80">
+                        <div className="relative w-full sm:w-40">
+                            <Select
+                                value={categoryFilter}
+                                onValueChange={setCategoryFilter}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="カテゴリを選択" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">すべて</SelectItem>
+                                    {categories.map(category => (
+                                        <SelectItem key={category.key} value={category.key}>{category.value}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="relative w-full sm:w-60">
                             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input className="pl-8" placeholder="ID またはタイトルで検索" value={globalFilter} onChange={event => setGlobalFilter(event.target.value)} />
+                        </div>
+                        <div className="relative w-full sm:w-10">
+                            <Button className="cursor-pointer" size="icon-sm" variant="ghost" onClick={startCreating} aria-label="映像作品を追加">
+                                <Plus />
+                            </Button>
                         </div>
                     </div>
 
@@ -287,7 +287,7 @@ export function Videos() {
                                     isLoading ? (
                                         <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">読み込み中…</td></tr>
                                     ) : loadError ? (
-                                        <tr><td colSpan={11} className="px-4 py-12 text-center"><p className="mb-3 text-destructive">{loadError}</p><Button variant="outline" onClick={() => void loadVideos()}>再読み込み</Button></td></tr>
+                                        <tr><td colSpan={11} className="px-4 py-12 text-center"><p className="mb-3 text-destructive">{loadError}</p><Button variant="outline" onClick={() => void loadMediaProducts()}>再読み込み</Button></td></tr>
                                     ) : table.getRowModel().rows.length === 0 ? (
                                         <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">該当する動画はありません。</td></tr>
                                     ) : table.getRowModel().rows.map(row => (
@@ -334,33 +334,17 @@ export function Videos() {
                 </div>
             </div>
 
-            <AlertDialog open={deleteTarget !== null} onOpenChange={open => !open && setDeleteTarget(null)}>
-                <AlertDialogContent size="sm">
-                    <AlertDialogHeader>
-                        <AlertDialogMedia className="bg-destructive/10 text-destructive"><Trash2 className="size-5" /></AlertDialogMedia>
-                        <AlertDialogTitle>「{deleteTarget?.title}」を削除しますか？</AlertDialogTitle>
-                        <AlertDialogDescription>この操作は元に戻せません。</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="cursor-pointer" disabled={isDeleting}>キャンセル</AlertDialogCancel>
-                        <AlertDialogAction className="cursor-pointer" variant="destructive" disabled={isDeleting}
-                           onClick={event => { event.preventDefault(); void confirmDelete(); }}
-                        >
-                            {isDeleting ? "削除中…" : "削除"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            <DialogPrimitive.Root open={editingVideo !== null} onOpenChange={open => !open && cancelEditing()}>
+            <DialogPrimitive.Root open={editingVideo !== null || isCreating} onOpenChange={open => !open && cancelEditing()}>
                 <DialogPrimitive.Portal>
                     <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-[1px]" />
                     <DialogPrimitive.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-xl bg-popover text-popover-foreground shadow-xl outline-none">
                         <form onSubmit={event => { event.preventDefault(); void saveEdit(); }}>
                             <div className="flex items-start justify-between border-b p-5">
                                 <div>
-                                    <DialogPrimitive.Title className="text-lg font-semibold">動画を編集</DialogPrimitive.Title>
-                                    <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">ID: {editingVideo?.id}</DialogPrimitive.Description>
+                                    <DialogPrimitive.Title className="text-lg font-semibold">{isCreating ? "映像作品を追加" : "映像作品を編集"}</DialogPrimitive.Title>
+                                    <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">
+                                        {isCreating ? "新しい映像作品の情報を入力してください。" : `ID: ${editingVideo?.id}`}
+                                    </DialogPrimitive.Description>
                                 </div>
                                 <DialogPrimitive.Close asChild>
                                     <Button className="cursor-pointer" type="button" size="icon-sm" variant="ghost" aria-label="閉じる"><X /></Button>
@@ -368,38 +352,29 @@ export function Videos() {
                             </div>
 
                             <div className="grid max-h-[65vh] grid-cols-1 gap-4 overflow-y-auto p-5 sm:grid-cols-2">
-                                <label className="space-y-1.5 sm:col-span-2">
+                                <label className="space-y-1.5 sm:col-span-1">
                                     <span className="text-sm font-medium">タイトル</span>
-                                    <textarea
-                                        className="min-h-12 w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                                        value={draft?.title ?? ""}
-                                        onChange={event => updateDraft("title", event.target.value)}
-                                        autoFocus
-                                    />
+                                    <Input type="text" autoFocus={isCreating} value={draft?.title ?? ""} onChange={event => updateDraft("title", event.target.value)} />
                                 </label>
                                 <label className="space-y-1.5">
                                     <span className="text-sm font-medium">カテゴリ</span>
                                     <Select
-                                        value={draft?.category_id ?? ""}
-                                        onValueChange={value => updateDraft("category_id", value)}
+                                        value={draft?.category ?? ""}
+                                        onValueChange={value => updateDraft("category", value)}
                                     >
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="カテゴリを選択" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {categories.map(category => (
-                                                <SelectItem key={category.id} value={category.id}>{category.title}</SelectItem>
+                                                <SelectItem key={category.key} value={category.key}>{category.value}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
                                 </label>
                                 {([
-                                    ["playlist_id", "プレイリスト ID", "text"],
-                                    ["status", "ステータス", "text"],
-                                    ["content_language", "言語", "text"],
-                                    ["current_time", "再生位置", "number"],
-                                    ["rate", "速度", "number"],
-                                    ["aspect_ratio", "画面比率", "number"],
+                                    ["details_url", "詳細リンク", "text"],
+                                    ["memo", "メモ", "text"]
                                 ] as const).map(([field, label, type]) => (
                                     <label key={field} className="space-y-1.5">
                                         <span className="text-sm font-medium">{label}</span>
@@ -413,7 +388,7 @@ export function Videos() {
                                     <Button type="button" className="cursor-pointer" variant="outline" disabled={isSaving}>キャンセル</Button>
                                 </DialogPrimitive.Close>
                                 <Button type="submit" className="cursor-pointer" disabled={isSaving}>
-                                    {isSaving ? "保存中…" : "保存"}
+                                    {isSaving ? "保存中…" : isCreating ? "追加" : "保存"}
                                 </Button>
                             </div>
                         </form>
