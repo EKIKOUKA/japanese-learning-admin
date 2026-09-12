@@ -31,6 +31,7 @@ export function GrammarList() {
     const [selectedLevel, setSelectedLevel] = useState<string>("N1");
     const [editingGrammar, setEditingGrammar] = useState<GrammarItem | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isLevelSelectOpen, setIsLevelSelectOpen] = useState(false);
     const [pagination, setPagination] = useState<PaginationState>({pageIndex: 0, pageSize: PAGE_SIZE});
 
     const levelItems = [
@@ -39,7 +40,7 @@ export function GrammarList() {
         { label: "N3", value: "N3" },
         { label: "N4", value: "N4" },
         { label: "N5", value: "N5" },
-        { label: "その他", value: "Other" }
+        { label: "その他", value: "Others" }
     ]
 
     const handleEdit = useCallback((item: GrammarItem) => {
@@ -138,21 +139,21 @@ export function GrammarList() {
         globalFilterFn: "includesString"
     })
 
-    const firstResult = list.length === 0 ? 0 :pagination.pageIndex * pagination.pageSize + 1;
+    const firstResult = list.length === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
     const lastResult = Math.min((pagination.pageIndex + 1) * pagination.pageSize, table.getFilteredRowModel().rows.length);
 
     useEffect(() => {
-        getGrammarList().then(res => {
-            console.log(res);
+        getGrammarList(selectedLevel).then(res => {
             setList(res);
         });
-    }, [])
+    }, [selectedLevel])
 
     return (
         <div className="w-full p-5 text-left sm:p-8">
             <div className="mx-auto w-full max-w-none space-y-6">
                 <div>
                     <h1 className="mb-2 text-3xl font-semibold tracking-tight sm:text-4xl">文法リスト</h1>
+                    <p className="text-sm text-muted-foreground">文法の検索、詳細編集ができます。</p>
                 </div>
 
                 <div className="rounded-xl border bg-card shadow-sm">
@@ -165,7 +166,7 @@ export function GrammarList() {
 
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectItem key="all" value="all">全部</SelectItem>
+                                        <SelectItem key="All" value="All">全部</SelectItem>
                                         {levelItems.map((item) => (
                                             <SelectItem key={item.value} value={item.value}>
                                                 {item.label}
@@ -252,7 +253,12 @@ export function GrammarList() {
             >
                 <DialogPrimitive.Portal>
                     <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-[1px]" />
-                    <DialogPrimitive.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-xl bg-popover text-popover-foreground shadow-xl outline-none">
+                    <DialogPrimitive.Content
+                        className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-xl bg-popover text-popover-foreground shadow-xl outline-none"
+                        onInteractOutside={event => {
+                            if (isLevelSelectOpen) event.preventDefault();
+                        }}
+                    >
                         <form onSubmit={event => { event.preventDefault(); void saveGrammar(); }}>
                             <div className="flex items-start justify-between border-b p-5">
                                 <div>
@@ -270,7 +276,11 @@ export function GrammarList() {
                             <div className="grid max-h-[65vh] grid-cols-1 gap-4 overflow-y-auto p-5 sm:grid-cols-2">
                                 <label className="space-y-1.5">
                                     <span className="text-sm font-medium">レベル</span>
-                                    <Select value={editingGrammar?.level ?? ""} onValueChange={value => updateEditingGrammar("level", value)}>
+                                    <Select
+                                        value={editingGrammar?.level ?? ""}
+                                        onValueChange={value => updateEditingGrammar("level", value)}
+                                        onOpenChange={setIsLevelSelectOpen}
+                                    >
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="文法ラベル" />
                                         </SelectTrigger>

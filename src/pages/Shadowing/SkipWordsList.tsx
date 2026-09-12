@@ -1,6 +1,6 @@
-import {addSkipWords, deleteSkipWords, getSkipWords} from "@/api/skip_words.tsx";
+import {addSkipWords, deleteSkipWords, getSkipWords} from "@/api/Shadowing/skip_words.tsx";
 import {useEffect, useState} from "react";
-import {Badge} from "@/components/ui/badge";
+import {Badge} from "@/components/ui/badge.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {toast} from "sonner"
@@ -15,7 +15,7 @@ import {
     AlertDialogHeader,
     AlertDialogMedia,
     AlertDialogTitle
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog.tsx"
 
 export const SkipWordsList = () => {
     type SkipWordsType = "skipWithPreviousLines" | "skipWithNextLines" | "skipOnlyCurrentLine";

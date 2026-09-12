@@ -35,7 +35,7 @@ const items = [
         children: [
             {
                 title: "カテゴリ",
-                url: "/shadowing/category",
+                url: "/shadowing/playlist_category",
                 icon: Film
             }, {
                 title: "動画の追加再生リスト",

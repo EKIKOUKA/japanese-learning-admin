@@ -12,8 +12,8 @@ export type GrammarItem = {
     is_marked: number;
 }
 
-export async function getGrammarList() {
-    const response = await fetch(`${API_BASE_URL}/fetch_grammars?level=N1`);
+export async function getGrammarList(level: string) {
+    const response = await fetch(`${API_BASE_URL}/fetch_grammars?level=${level}`);
 
     if (!response.ok) {
         throw new Error("Failed to load SkipWordsList");
