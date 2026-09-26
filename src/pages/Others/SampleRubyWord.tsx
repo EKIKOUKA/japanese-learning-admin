@@ -8,13 +8,13 @@ import {
     type PaginationState,
 } from "@tanstack/react-table";
 import {
-    getOriginPlaylistCategories,
-    addPlaylistCategories,
-    updatePlaylistCategories,
-    deletePlaylistCategories,
-    type PlaylistCategories,
-    type PlaylistCategoriesChanges
-} from "@/api/Shadowing/playlist_category.tsx";
+    getSampleRubyWord,
+    addSampleRubyWord,
+    updateSampleRubyWord,
+    deleteSampleRubyWord,
+    type SampleRubyWord,
+    type SampleRubyWordChanges
+} from "@/api/Others/sample_ruby_word.tsx";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {toast} from "sonner";
 import {ChevronLeft, ChevronRight, Pencil, Search, X, Plus, Trash2} from "lucide-react";
@@ -25,49 +25,45 @@ import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
-    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogMedia,
     AlertDialogTitle
 } from "@/components/ui/alert-dialog.tsx";
 
 const PAGE_SIZE = 10;
-type PlaylistCategoriesDraft = {
-    [K in keyof PlaylistCategoriesChanges]:
-      K extends "sort_order"
-        ? PlaylistCategoriesChanges[K]
-        : string;
-}
+type SampleRubyWordDraft = Record<keyof SampleRubyWordChanges, string>
 
 const toDraft = (
-    playlistCategories: PlaylistCategories
-): PlaylistCategoriesDraft => ({
-    title: playlistCategories.title ?? "",
-    category: playlistCategories.category,
-    playlist_id: playlistCategories.playlist_id ?? "",
-    sort_order: Number(playlistCategories.sort_order)
+    sampleRubyWord: SampleRubyWord
+): SampleRubyWordDraft => ({
+    word: sampleRubyWord.word ?? "",
+    ruby: sampleRubyWord.ruby ?? "",
+    meaning: sampleRubyWord.meaning ?? ""
 });
 
-export function PlaylistCategories() {
-    const [playlistCategories, setPlaylistCategories] = useState<PlaylistCategories[]>([]);
+export function SampleRubyWord() {
+    const [sampleRubyWord, setSampleRubyWord] = useState<SampleRubyWord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [globalFilter, setGlobalFilter] = useState("");
     const [pagination, setPagination] = useState<PaginationState>({pageIndex: 0, pageSize: PAGE_SIZE});
-    const [editingItem, setEditingItem] = useState<PlaylistCategories | null>(null);
+    const [editingItem, setEditingItem] = useState<SampleRubyWord | null>(null);
     const [isCreating, setIsCreating] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState<PlaylistCategories | null>(null);
-    const [draft, setDraft] = useState<PlaylistCategoriesDraft | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<SampleRubyWord | null>(null);
+    const [draft, setDraft] = useState<SampleRubyWordDraft | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const loadPlaylistCategories = async () => {
+    const loadSampleRubyWord = async () => {
         setIsLoading(true);
         setLoadError(null);
 
         try {
-            const loadedOriginPlaylistCategories = await getOriginPlaylistCategories();
-            setPlaylistCategories(loadedOriginPlaylistCategories);
+            const loadedSampleRubyWord = await getSampleRubyWord();
+            setSampleRubyWord(loadedSampleRubyWord);
         } catch {
             setLoadError("データの読み込みに失敗しました。もう一度お試しください。");
         } finally {
@@ -75,18 +71,18 @@ export function PlaylistCategories() {
         }
     };
     useEffect(() => {
-        void loadPlaylistCategories();
+        void loadSampleRubyWord();
     }, []);
 
-    const startEditing = useCallback((mediaProduct: PlaylistCategories) => {
+    const startEditing = useCallback((sampleRubyWordItem: SampleRubyWord) => {
         setIsCreating(false);
-        setEditingItem(mediaProduct);
-        setDraft(toDraft(mediaProduct));
+        setEditingItem(sampleRubyWordItem);
+        setDraft(toDraft(sampleRubyWordItem));
     }, []);
 
     const startCreating = () => {
         setEditingItem(null);
-        setDraft({title: "", category: "", playlist_id: "", sort_order: -1});
+        setDraft({word: "", ruby: "", meaning: ""});
         setIsCreating(true);
     };
 
@@ -101,8 +97,8 @@ export function PlaylistCategories() {
 
         setIsDeleting(true);
         try {
-            await deletePlaylistCategories(deleteTarget.id);
-            await loadPlaylistCategories();
+            await deleteSampleRubyWord(deleteTarget.id);
+            await loadSampleRubyWord();
             toast.success("データを削除しました。", {position: "top-center"});
             setDeleteTarget(null);
         } catch {
@@ -115,42 +111,41 @@ export function PlaylistCategories() {
     const saveEdit = async () => {
         if ((!editingItem && !isCreating) || !draft) return;
 
-        const title = draft.title.trim();
-        if (!title) {
-            toast.error("タイトルを入力してください。", {position: "top-center"});
+        const word = draft.word.trim();
+        const ruby = draft.ruby.trim();
+        const meaning = draft.meaning.trim();
+        if (!word) {
+            toast.error("単語を入力してください。", {position: "top-center"});
             return;
         }
-
-        if (!draft.category) {
-            toast.error("カテゴリを入力してください。", {position: "top-center"});
+        if (!ruby) {
+            toast.error("振り仮名を入力してください。", {position: "top-center"});
+            return;
+        }
+        if (!meaning) {
+            toast.error("説明を入力してください。", {position: "top-center"});
             return;
         }
 
         setIsSaving(true);
         try {
-            const changes: PlaylistCategoriesChanges = {
-                title,
-                category: draft.category,
-                sort_order: Number(draft.sort_order),
-                playlist_id: draft.playlist_id.trim()
+            const changes: SampleRubyWordChanges = {
+                word: draft.word,
+                ruby: draft.ruby,
+                meaning: draft.meaning
             };
-
-            if (Object.values(changes).some(value => typeof value === "number" && Number.isNaN(value))) {
-                toast.error("数値項目に正しい値を入力してください。", {position: "top-center"});
-                return;
-            }
 
             if (isCreating) {
                 console.log("changes: ", changes)
-                await addPlaylistCategories(changes);
-                await loadPlaylistCategories();
-                toast.success("動画カテゴリを追加しました。", {position: "top-center"});
+                await addSampleRubyWord(changes);
+                await loadSampleRubyWord();
+                toast.success("同じ発音の言葉を追加しました。", {position: "top-center"});
             } else if (editingItem) {
-                const updatedItem = await updatePlaylistCategories(editingItem.id, changes);
-                setPlaylistCategories(current => current.map(item =>
+                const updatedItem = await updateSampleRubyWord(editingItem.id, changes);
+                setSampleRubyWord(current => current.map(item =>
                     item.id === editingItem.id ? {...item, ...changes, ...updatedItem} : item
                 ));
-                toast.success("動画カテゴリを更新しました。", {position: "top-center"});
+                toast.success("同じ発音の言葉を更新しました。", {position: "top-center"});
             }
 
             cancelEditing();
@@ -161,36 +156,31 @@ export function PlaylistCategories() {
         }
     };
 
-    const updateDraft = (field: keyof PlaylistCategoriesDraft, value: string) => {
+    const updateDraft = (field: keyof SampleRubyWordDraft, value: string) => {
         setDraft(current => current ? {...current, [field]: value} : current);
     };
 
-    const columns = useMemo<ColumnDef<PlaylistCategories>[]>(() => [
+    const columns = useMemo<ColumnDef<SampleRubyWord>[]>(() => [
         {
             accessorKey: "id",
             header: "ID",
             cell: ({row}) => <span className="font-mono text-xs text-muted-foreground">{row.original.id}</span>
         },
         {
-            accessorKey: "title",
-            header: "タイトル",
-            minSize: 180,
-            cell: ({row}) => <span className="font-medium text-foreground">{row.original.title}</span>
+            accessorKey: "word",
+            header: "単語",
+            cell: ({row}) => <span>{row.original.word}</span>
         },
         {
-            accessorKey: "category",
-            header: "カテゴリ",
-            cell: ({row}) => <span>{row.original.category}</span>
+            accessorKey: "ruby",
+            header: "振り仮名",
+            cell: ({row}) => <span>{row.original.ruby}</span>
         },
         {
-            accessorKey: "playlist_id",
-            header: "再生リストid",
-            cell: ({row}) => <span>{row.original.playlist_id}</span>
-        },
-        {
-            accessorKey: "sort_order",
-            header: "順位",
-            cell: ({row}) => <span>{row.original.sort_order}</span>
+            accessorKey: "meaning",
+            header: "説明",
+            minSize: 280,
+            cell: ({row}) => <span>{row.original.meaning}</span>
         },
         {
             accessorKey: "created_at",
@@ -204,11 +194,11 @@ export function PlaylistCategories() {
             cell: ({row}) => (
                 <div className="flex justify-end gap-1">
                     <Button className="cursor-pointer" size="icon-sm" variant="ghost"
-                            onClick={() => startEditing(row.original)} aria-label={`${row.original.title} を編集`}>
+                            onClick={() => startEditing(row.original)} aria-label={`${row.original.word} を編集`}>
                         <Pencil />
                     </Button>
                     <Button className="text-destructive hover:text-destructive cursor-pointer" size="icon-sm" variant="ghost"
-                            onClick={() => setDeleteTarget(row.original)} aria-label={`${row.original.title} を削除`}>
+                            onClick={() => setDeleteTarget(row.original)} aria-label={`${row.original.word} を削除`}>
                         <Trash2 />
                     </Button>
                 </div>
@@ -217,7 +207,7 @@ export function PlaylistCategories() {
     ], [startEditing]);
 
     const table = useReactTable({
-        data: playlistCategories,
+        data: sampleRubyWord,
         columns,
         state: {globalFilter, pagination},
         onGlobalFilterChange: setGlobalFilter,
@@ -236,18 +226,18 @@ export function PlaylistCategories() {
         <div className="w-full p-5 text-left sm:p-8">
             <div className="mx-auto w-full max-w-none space-y-6">
                 <div>
-                    <h1 className="mb-2 text-3xl font-semibold tracking-tight sm:text-4xl">動画カテゴリリスト</h1>
-                    <p className="text-sm text-muted-foreground">動画カテゴリの検索、詳細、削除、編集ができます。</p>
+                    <h1 className="mb-2 text-3xl font-semibold tracking-tight sm:text-4xl">同じ発音の言葉リスト</h1>
+                    <p className="text-sm text-muted-foreground">同じ発音の言葉の検索、詳細、削除、編集ができます。</p>
                 </div>
 
                 <div className="rounded-xl border bg-card shadow-sm">
                     <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="relative w-full sm:w-60">
                             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input className="pl-8" placeholder="ID またはタイトルで検索" value={globalFilter} onChange={event => setGlobalFilter(event.target.value)} />
+                            <Input className="pl-8" placeholder="ID または単語で検索" value={globalFilter} onChange={event => setGlobalFilter(event.target.value)} />
                         </div>
                         <div className="relative w-full sm:w-10">
-                            <Button className="cursor-pointer" size="icon-sm" variant="ghost" onClick={startCreating} aria-label="映像作品を追加">
+                            <Button className="cursor-pointer" size="icon-sm" variant="ghost" onClick={startCreating} aria-label="同じ発音の言葉を追加">
                                 <Plus />
                             </Button>
                         </div>
@@ -256,44 +246,44 @@ export function PlaylistCategories() {
                     <div className="overflow-x-auto">
                         <table className="text-sm" style={{width: table.getTotalSize(), minWidth: "100%"}}>
                             <thead className="border-b bg-muted/40 text-left text-muted-foreground">
-                                {
-                                    table.getHeaderGroups().map(headerGroup => (
-                                        <tr key={headerGroup.id}>
-                                            {headerGroup.headers.map(header => (
-                                                <th
-                                                    key={header.id}
-                                                    className={`relative px-4 py-3 font-medium whitespace-nowrap ${header.column.id === "actions" ? "sticky right-0 z-20 bg-muted/40 text-right shadow-[-1px_0_0_var(--border)]" : ""}`}
-                                                    style={{width: header.getSize()}}
-                                                >
-                                                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    ))
-                                }
+                            {
+                                table.getHeaderGroups().map(headerGroup => (
+                                    <tr key={headerGroup.id}>
+                                        {headerGroup.headers.map(header => (
+                                            <th
+                                                key={header.id}
+                                                className={`relative px-4 py-3 font-medium whitespace-nowrap ${header.column.id === "actions" ? "sticky right-0 z-20 bg-muted/40 text-right shadow-[-1px_0_0_var(--border)]" : ""}`}
+                                                style={{width: header.getSize()}}
+                                            >
+                                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                ))
+                            }
                             </thead>
                             <tbody className="divide-y">
-                                {
-                                    isLoading ? (
-                                        <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">読み込み中…</td></tr>
-                                    ) : loadError ? (
-                                        <tr><td colSpan={11} className="px-4 py-12 text-center"><p className="mb-3 text-destructive">{loadError}</p><Button variant="outline" onClick={() => void loadPlaylistCategories()}>再読み込み</Button></td></tr>
-                                    ) : table.getRowModel().rows.length === 0 ? (
-                                        <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">該当する動画はありません。</td></tr>
-                                    ) : table.getRowModel().rows.map(row => (
-                                        <tr key={row.id} className="hover:bg-muted/30">
-                                            {row.getVisibleCells().map(cell => (
-                                                <td
-                                                    key={cell.id}
-                                                    className={`px-4 py-3 align-middle ${cell.column.id === "actions" ? "sticky right-0 z-10 bg-card text-right shadow-[-1px_0_0_var(--border)] group-hover:bg-muted/30" : ""}`}
-                                                    style={{width: cell.column.getSize()}}
-                                                >
-                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))
-                                }
+                            {
+                                isLoading ? (
+                                    <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">読み込み中…</td></tr>
+                                ) : loadError ? (
+                                    <tr><td colSpan={11} className="px-4 py-12 text-center"><p className="mb-3 text-destructive">{loadError}</p><Button variant="outline" onClick={() => void loadSampleRubyWord()}>再読み込み</Button></td></tr>
+                                ) : table.getRowModel().rows.length === 0 ? (
+                                    <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">該当する同じ発音の言葉はありません。</td></tr>
+                                ) : table.getRowModel().rows.map(row => (
+                                    <tr key={row.id} className="hover:bg-muted/30">
+                                        {row.getVisibleCells().map(cell => (
+                                            <td
+                                                key={cell.id}
+                                                className={`px-4 py-3 align-middle ${cell.column.id === "actions" ? "sticky right-0 z-10 bg-card text-right shadow-[-1px_0_0_var(--border)] group-hover:bg-muted/30" : ""}`}
+                                                style={{width: cell.column.getSize()}}
+                                            >
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))
+                            }
                             </tbody>
                         </table>
                     </div>
@@ -328,7 +318,7 @@ export function PlaylistCategories() {
                 <AlertDialogContent size="sm">
                     <AlertDialogHeader>
                         <AlertDialogMedia className="bg-destructive/10 text-destructive"><Trash2 className="size-5" /></AlertDialogMedia>
-                        <AlertDialogTitle>「{deleteTarget?.title}」を削除しますか？</AlertDialogTitle>
+                        <AlertDialogTitle>「{deleteTarget?.word}」を削除しますか？</AlertDialogTitle>
                         <AlertDialogDescription>この操作は元に戻せません。</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -349,9 +339,9 @@ export function PlaylistCategories() {
                         <form onSubmit={event => { event.preventDefault(); void saveEdit(); }}>
                             <div className="flex items-start justify-between border-b p-5">
                                 <div>
-                                    <DialogPrimitive.Title className="text-lg font-semibold">{isCreating ? "動画カテゴリを追加" : "動画カテゴリを編集"}</DialogPrimitive.Title>
+                                    <DialogPrimitive.Title className="text-lg font-semibold">{isCreating ? "同じ発音の言葉を追加" : "同じ発音の言葉を編集"}</DialogPrimitive.Title>
                                     <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">
-                                        {isCreating ? "新しい動画カテゴリの情報を入力してください。" : `ID: ${editingItem?.id}`}
+                                        {isCreating ? "新しい同じ発音の言葉の情報を入力してください。" : `ID: ${editingItem?.id}`}
                                     </DialogPrimitive.Description>
                                 </div>
                                 <DialogPrimitive.Close asChild>
@@ -361,16 +351,20 @@ export function PlaylistCategories() {
 
                             <div className="grid max-h-[65vh] grid-cols-1 gap-4 overflow-y-auto p-5 sm:grid-cols-2">
                                 {([
-                                    ["title", "タイトル", "text"],
-                                    ["category", "カテゴリ", "text"],
-                                    ["playlist_id", "再生リストid", "text"],
-                                    ["sort_order", "順位", "number"]
+                                    ["word", "単語", "text"],
+                                    ["ruby", "振り仮名", "text"]
                                 ] as const).map(([field, label, type]) => (
                                     <label key={field} className="space-y-1.5">
                                         <span className="text-sm font-medium">{label}</span>
-                                        <Input type={type} value={draft?.[field] ?? ""} onChange={event => updateDraft(field, event.target.value)} />
+                                        <Input type={type} value={draft?.[field] ?? ""}
+                                           onChange={event => updateDraft(field, event.target.value)} />
                                     </label>
                                 ))}
+                                <label className="space-y-1.5 sm:col-span-2">
+                                    <span className="text-sm font-medium">説明</span>
+                                    <textarea className="min-h-18 w-full resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                                        value={draft?.meaning ?? ""} onChange={event => updateDraft("meaning", event.target.value)} />
+                                </label>
                             </div>
 
                             <div className="flex justify-end gap-2 border-t p-4">

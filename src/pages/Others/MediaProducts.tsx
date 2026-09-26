@@ -8,112 +8,97 @@ import {
     type PaginationState,
 } from "@tanstack/react-table";
 import {
-    getOriginPlaylistCategories,
-    addPlaylistCategories,
-    updatePlaylistCategories,
-    deletePlaylistCategories,
-    type PlaylistCategories,
-    type PlaylistCategoriesChanges
-} from "@/api/Shadowing/playlist_category.tsx";
+    getMediaProducts,
+    addMediaProduct,
+    updateMediaProduct,
+    type MediaProduct,
+    type MediaProductChanges
+} from "@/api/Others/media_products.tsx";
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {toast} from "sonner";
-import {ChevronLeft, ChevronRight, Pencil, Search, X, Plus, Trash2} from "lucide-react";
+import {ChevronLeft, ChevronRight, Pencil, Search, X, Plus} from "lucide-react";
 import {Dialog as DialogPrimitive} from "radix-ui";
 import {Button} from "@/components/ui/button.tsx";
 import {Input} from "@/components/ui/input.tsx";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogMedia,
-    AlertDialogTitle
-} from "@/components/ui/alert-dialog.tsx";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
 
 const PAGE_SIZE = 10;
-type PlaylistCategoriesDraft = {
-    [K in keyof PlaylistCategoriesChanges]:
-      K extends "sort_order"
-        ? PlaylistCategoriesChanges[K]
-        : string;
-}
+type MediaProductDraft = Record<keyof MediaProductChanges, string>;
 
-const toDraft = (
-    playlistCategories: PlaylistCategories
-): PlaylistCategoriesDraft => ({
-    title: playlistCategories.title ?? "",
-    category: playlistCategories.category,
-    playlist_id: playlistCategories.playlist_id ?? "",
-    sort_order: Number(playlistCategories.sort_order)
+const toDraft = (mediaProduct: MediaProduct): MediaProductDraft => ({
+    title: mediaProduct.title ?? "",
+    category: mediaProduct.category,
+    details_url: mediaProduct.details_url ?? "",
+    memo: mediaProduct.memo ?? ""
 });
 
-export function PlaylistCategories() {
-    const [playlistCategories, setPlaylistCategories] = useState<PlaylistCategories[]>([]);
+export function MediaProducts() {
+    const [mediaProducts, setMediaProducts] = useState<MediaProduct[]>([]);
+    const [categories] = useState([
+        {
+            key: "drama",
+            value: "ドラマ"
+        }, {
+            key: "anime",
+            value: "アニメ"
+        }, {
+            key: "movie",
+            value: "映画"
+        }
+    ]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [globalFilter, setGlobalFilter] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState("all");
     const [pagination, setPagination] = useState<PaginationState>({pageIndex: 0, pageSize: PAGE_SIZE});
-    const [editingItem, setEditingItem] = useState<PlaylistCategories | null>(null);
+    const [editingVideo, setEditingVideo] = useState<MediaProduct | null>(null);
     const [isCreating, setIsCreating] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState<PlaylistCategories | null>(null);
-    const [draft, setDraft] = useState<PlaylistCategoriesDraft | null>(null);
+    const [draft, setDraft] = useState<MediaProductDraft | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [isCategorySelectOpen, setIsCategorySelectOpen] = useState(false);
 
-    const loadPlaylistCategories = async () => {
+    const loadMediaProducts = async () => {
         setIsLoading(true);
         setLoadError(null);
 
         try {
-            const loadedOriginPlaylistCategories = await getOriginPlaylistCategories();
-            setPlaylistCategories(loadedOriginPlaylistCategories);
+            const loadedMediaProducts = await getMediaProducts();
+            setMediaProducts(loadedMediaProducts);
         } catch {
-            setLoadError("データの読み込みに失敗しました。もう一度お試しください。");
+            setLoadError("動画の読み込みに失敗しました。もう一度お試しください。");
         } finally {
             setIsLoading(false);
         }
     };
+
     useEffect(() => {
-        void loadPlaylistCategories();
+        void loadMediaProducts();
     }, []);
 
-    const startEditing = useCallback((mediaProduct: PlaylistCategories) => {
+    useEffect(() => {
+        setPagination(current => ({...current, pageIndex: 0}));
+    }, [globalFilter, categoryFilter]);
+
+    const startEditing = useCallback((mediaProduct: MediaProduct) => {
         setIsCreating(false);
-        setEditingItem(mediaProduct);
+        setEditingVideo(mediaProduct);
         setDraft(toDraft(mediaProduct));
     }, []);
 
     const startCreating = () => {
-        setEditingItem(null);
-        setDraft({title: "", category: "", playlist_id: "", sort_order: -1});
+        setEditingVideo(null);
+        setDraft({title: "", category: "drama", details_url: "", memo: ""});
         setIsCreating(true);
     };
 
     const cancelEditing = () => {
-        setEditingItem(null);
+        setEditingVideo(null);
         setIsCreating(false);
         setDraft(null);
     };
 
-    const confirmDelete = async () => {
-        if (!deleteTarget) return;
-
-        setIsDeleting(true);
-        try {
-            await deletePlaylistCategories(deleteTarget.id);
-            await loadPlaylistCategories();
-            toast.success("データを削除しました。", {position: "top-center"});
-            setDeleteTarget(null);
-        } catch {
-            toast.error("削除に失敗しました。", {position: "top-center"});
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-
     const saveEdit = async () => {
-        if ((!editingItem && !isCreating) || !draft) return;
+        if ((!editingVideo && !isCreating) || !draft) return;
 
         const title = draft.title.trim();
         if (!title) {
@@ -122,17 +107,17 @@ export function PlaylistCategories() {
         }
 
         if (!draft.category) {
-            toast.error("カテゴリを入力してください。", {position: "top-center"});
+            toast.error("カテゴリを選択してください。", {position: "top-center"});
             return;
         }
 
         setIsSaving(true);
         try {
-            const changes: PlaylistCategoriesChanges = {
+            const changes: MediaProductChanges = {
                 title,
                 category: draft.category,
-                sort_order: Number(draft.sort_order),
-                playlist_id: draft.playlist_id.trim()
+                details_url: draft.details_url.trim() || null,
+                memo: draft.memo.trim() || null
             };
 
             if (Object.values(changes).some(value => typeof value === "number" && Number.isNaN(value))) {
@@ -141,16 +126,15 @@ export function PlaylistCategories() {
             }
 
             if (isCreating) {
-                console.log("changes: ", changes)
-                await addPlaylistCategories(changes);
-                await loadPlaylistCategories();
-                toast.success("動画カテゴリを追加しました。", {position: "top-center"});
-            } else if (editingItem) {
-                const updatedItem = await updatePlaylistCategories(editingItem.id, changes);
-                setPlaylistCategories(current => current.map(item =>
-                    item.id === editingItem.id ? {...item, ...changes, ...updatedItem} : item
+                await addMediaProduct(changes);
+                await loadMediaProducts();
+                toast.success("映像作品を追加しました。", {position: "top-center"});
+            } else if (editingVideo) {
+                const updatedVideo = await updateMediaProduct(editingVideo.id, changes);
+                setMediaProducts(current => current.map(video =>
+                    video.id === editingVideo.id ? {...video, ...changes, ...updatedVideo} : video
                 ));
-                toast.success("動画カテゴリを更新しました。", {position: "top-center"});
+                toast.success("動画情報を更新しました。", {position: "top-center"});
             }
 
             cancelEditing();
@@ -161,11 +145,20 @@ export function PlaylistCategories() {
         }
     };
 
-    const updateDraft = (field: keyof PlaylistCategoriesDraft, value: string) => {
+    const updateDraft = (field: keyof MediaProductDraft, value: string) => {
         setDraft(current => current ? {...current, [field]: value} : current);
     };
 
-    const columns = useMemo<ColumnDef<PlaylistCategories>[]>(() => [
+    const categoryTitles = useMemo(
+        () => new Map(
+            categories.map(
+                category => [category.key, category.value]
+            )
+        ),
+        [categories]
+    );
+
+    const columns = useMemo<ColumnDef<MediaProduct>[]>(() => [
         {
             accessorKey: "id",
             header: "ID",
@@ -174,23 +167,23 @@ export function PlaylistCategories() {
         {
             accessorKey: "title",
             header: "タイトル",
-            minSize: 180,
+            size: 345,
             cell: ({row}) => <span className="font-medium text-foreground">{row.original.title}</span>
         },
         {
             accessorKey: "category",
             header: "カテゴリ",
-            cell: ({row}) => <span>{row.original.category}</span>
+            cell: ({row}) => <span>{categoryTitles.get(row.original.category)}</span>
         },
         {
-            accessorKey: "playlist_id",
-            header: "再生リストid",
-            cell: ({row}) => <span>{row.original.playlist_id}</span>
+            accessorKey: "details_url",
+            header: "詳細リンク",
+            cell: ({row}) => <span>{row.original.details_url}</span>
         },
         {
-            accessorKey: "sort_order",
-            header: "順位",
-            cell: ({row}) => <span>{row.original.sort_order}</span>
+            accessorKey: "memo",
+            header: "メモ",
+            cell: ({row}) => <span>{row.original.memo}</span>
         },
         {
             accessorKey: "created_at",
@@ -203,21 +196,23 @@ export function PlaylistCategories() {
             size: 60, minSize: 60, maxSize: 60,
             cell: ({row}) => (
                 <div className="flex justify-end gap-1">
-                    <Button className="cursor-pointer" size="icon-sm" variant="ghost"
-                            onClick={() => startEditing(row.original)} aria-label={`${row.original.title} を編集`}>
+                    <Button className="cursor-pointer" size="icon-sm" variant="ghost" onClick={() => startEditing(row.original)} aria-label={`${row.original.title} を編集`}>
                         <Pencil />
-                    </Button>
-                    <Button className="text-destructive hover:text-destructive cursor-pointer" size="icon-sm" variant="ghost"
-                            onClick={() => setDeleteTarget(row.original)} aria-label={`${row.original.title} を削除`}>
-                        <Trash2 />
                     </Button>
                 </div>
             )
         }
-    ], [startEditing]);
+    ], [categoryTitles, startEditing]);
+
+    const filteredMediaProducts = useMemo(
+        () => categoryFilter === "all"
+            ? mediaProducts
+            : mediaProducts.filter(product => product.category === categoryFilter),
+        [categoryFilter, mediaProducts]
+    );
 
     const table = useReactTable({
-        data: playlistCategories,
+        data: filteredMediaProducts,
         columns,
         state: {globalFilter, pagination},
         onGlobalFilterChange: setGlobalFilter,
@@ -236,12 +231,28 @@ export function PlaylistCategories() {
         <div className="w-full p-5 text-left sm:p-8">
             <div className="mx-auto w-full max-w-none space-y-6">
                 <div>
-                    <h1 className="mb-2 text-3xl font-semibold tracking-tight sm:text-4xl">動画カテゴリリスト</h1>
-                    <p className="text-sm text-muted-foreground">動画カテゴリの検索、詳細、削除、編集ができます。</p>
+                    <h1 className="mb-2 text-3xl font-semibold tracking-tight sm:text-4xl">映像作品リスト</h1>
+                    <p className="text-sm text-muted-foreground">映像作品の検索、詳細編集ができます。</p>
                 </div>
 
                 <div className="rounded-xl border bg-card shadow-sm">
                     <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="relative w-full sm:w-40">
+                            <Select
+                                value={categoryFilter}
+                                onValueChange={setCategoryFilter}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="カテゴリを選択" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">すべて</SelectItem>
+                                    {categories.map(category => (
+                                        <SelectItem key={category.key} value={category.key}>{category.value}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="relative w-full sm:w-60">
                             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input className="pl-8" placeholder="ID またはタイトルで検索" value={globalFilter} onChange={event => setGlobalFilter(event.target.value)} />
@@ -277,7 +288,7 @@ export function PlaylistCategories() {
                                     isLoading ? (
                                         <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">読み込み中…</td></tr>
                                     ) : loadError ? (
-                                        <tr><td colSpan={11} className="px-4 py-12 text-center"><p className="mb-3 text-destructive">{loadError}</p><Button variant="outline" onClick={() => void loadPlaylistCategories()}>再読み込み</Button></td></tr>
+                                        <tr><td colSpan={11} className="px-4 py-12 text-center"><p className="mb-3 text-destructive">{loadError}</p><Button variant="outline" onClick={() => void loadMediaProducts()}>再読み込み</Button></td></tr>
                                     ) : table.getRowModel().rows.length === 0 ? (
                                         <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">該当する動画はありません。</td></tr>
                                     ) : table.getRowModel().rows.map(row => (
@@ -324,34 +335,21 @@ export function PlaylistCategories() {
                 </div>
             </div>
 
-            <AlertDialog open={deleteTarget !== null} onOpenChange={open => !open && setDeleteTarget(null)}>
-                <AlertDialogContent size="sm">
-                    <AlertDialogHeader>
-                        <AlertDialogMedia className="bg-destructive/10 text-destructive"><Trash2 className="size-5" /></AlertDialogMedia>
-                        <AlertDialogTitle>「{deleteTarget?.title}」を削除しますか？</AlertDialogTitle>
-                        <AlertDialogDescription>この操作は元に戻せません。</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="cursor-pointer" disabled={isDeleting}>キャンセル</AlertDialogCancel>
-                        <AlertDialogAction className="cursor-pointer" variant="destructive" disabled={isDeleting}
-                           onClick={event => { event.preventDefault(); void confirmDelete(); }}
-                        >
-                            {isDeleting ? "削除中…" : "削除"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            <DialogPrimitive.Root open={editingItem !== null || isCreating} onOpenChange={open => !open && cancelEditing()}>
+            <DialogPrimitive.Root open={editingVideo !== null || isCreating} onOpenChange={open => !open && cancelEditing()}>
                 <DialogPrimitive.Portal>
                     <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-[1px]" />
-                    <DialogPrimitive.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-xl bg-popover text-popover-foreground shadow-xl outline-none">
+                    <DialogPrimitive.Content
+                        className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-xl bg-popover text-popover-foreground shadow-xl outline-none"
+                        onInteractOutside={event => {
+                            if (isCategorySelectOpen) event.preventDefault();
+                        }}
+                    >
                         <form onSubmit={event => { event.preventDefault(); void saveEdit(); }}>
                             <div className="flex items-start justify-between border-b p-5">
                                 <div>
-                                    <DialogPrimitive.Title className="text-lg font-semibold">{isCreating ? "動画カテゴリを追加" : "動画カテゴリを編集"}</DialogPrimitive.Title>
+                                    <DialogPrimitive.Title className="text-lg font-semibold">{isCreating ? "映像作品を追加" : "映像作品を編集"}</DialogPrimitive.Title>
                                     <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">
-                                        {isCreating ? "新しい動画カテゴリの情報を入力してください。" : `ID: ${editingItem?.id}`}
+                                        {isCreating ? "新しい映像作品の情報を入力してください。" : `ID: ${editingVideo?.id}`}
                                     </DialogPrimitive.Description>
                                 </div>
                                 <DialogPrimitive.Close asChild>
@@ -360,11 +358,30 @@ export function PlaylistCategories() {
                             </div>
 
                             <div className="grid max-h-[65vh] grid-cols-1 gap-4 overflow-y-auto p-5 sm:grid-cols-2">
+                                <label className="space-y-1.5 sm:col-span-1">
+                                    <span className="text-sm font-medium">タイトル</span>
+                                    <Input type="text" autoFocus={isCreating} value={draft?.title ?? ""} onChange={event => updateDraft("title", event.target.value)} />
+                                </label>
+                                <label className="space-y-1.5">
+                                    <span className="text-sm font-medium">カテゴリ</span>
+                                    <Select
+                                        value={draft?.category ?? ""}
+                                        onValueChange={value => updateDraft("category", value)}
+                                        onOpenChange={setIsCategorySelectOpen}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="カテゴリを選択" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {categories.map(category => (
+                                                <SelectItem key={category.key} value={category.key}>{category.value}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </label>
                                 {([
-                                    ["title", "タイトル", "text"],
-                                    ["category", "カテゴリ", "text"],
-                                    ["playlist_id", "再生リストid", "text"],
-                                    ["sort_order", "順位", "number"]
+                                    ["details_url", "詳細リンク", "text"],
+                                    ["memo", "メモ", "text"]
                                 ] as const).map(([field, label, type]) => (
                                     <label key={field} className="space-y-1.5">
                                         <span className="text-sm font-medium">{label}</span>

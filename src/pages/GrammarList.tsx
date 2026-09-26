@@ -158,7 +158,7 @@ export function GrammarList() {
 
                 <div className="rounded-xl border bg-card shadow-sm">
                     <div className="flex flex-col gap-3 boarder-b p-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="relative w-full sm:w-80">
+                        <div className="relative w-full sm:w-25">
                             <Select value={selectedLevel} onValueChange={setSelectedLevel}>
                                 <SelectTrigger className="w-full max-w-48">
                                     <SelectValue placeholder="文法ラベル" />

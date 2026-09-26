@@ -39,11 +39,15 @@ const items = [
                 icon: Film
             }, {
                 title: "動画の追加再生リスト",
-                url: "/shadowing/playlist",
+                url: "/shadowing/playlist_list",
                 icon: Film
             }, {
                 title: "動画リスト",
                 url: "/shadowing/videos",
+                icon: Film
+            }, {
+                title: "練習記録",
+                url: "/shadowing/practice_record",
                 icon: Film
             }, {
                 title: "スキップ単語リスト",
@@ -61,12 +65,28 @@ const items = [
         icon: Filter,
         children: [
             {
-                title: "慣用句",
-                url: "/others/Idioms",
+                title: "国語美文",
+                url: "/others/elegant_sentence",
                 icon: Filter
             }, {
                 title: "映像作品リスト",
                 url: "/others/media_products",
+                icon: Filter
+            }, {
+                title: "台湾語に無い漢字",
+                url: "/others/shina_none_kanji_word",
+                icon: Filter
+            }, {
+                title: "覚えにくい単語",
+                url: "/others/memory_hard_word",
+                icon: Filter
+            }, {
+                title: "慣用句",
+                url: "/others/Idioms",
+                icon: Filter
+            }, {
+                title: "同じ発音の言葉",
+                url: "/others/sample_ruby_word",
                 icon: Filter
             }
         ]
