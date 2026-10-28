@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export type MemoryHardWord = {
@@ -11,13 +12,13 @@ export type MemoryHardWord = {
 export type MemoryHardWordChanges = Omit<MemoryHardWord, "id" | "created_at">;
 
 export async function getMemoryHardWord(): Promise<MemoryHardWord[]> {
-    const response = await fetch(`${API_BASE_URL}/fetch_memory_hard_words`);
+    const response = await apiFetch(`${API_BASE_URL}/fetch_memory_hard_words`);
     if (!response.ok) throw new Error("Failed to load MemoryHardWord");
     return response.json();
 }
 
 async function postMemoryHardWord<T>(url: string, body: Record<string, unknown>): Promise<T> {
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(body),

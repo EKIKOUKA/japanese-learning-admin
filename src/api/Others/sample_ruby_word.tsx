@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export type SampleRubyWord = {
@@ -11,13 +12,13 @@ export type SampleRubyWord = {
 export type SampleRubyWordChanges = Omit<SampleRubyWord, "id" | "created_at">;
 
 export async function getSampleRubyWord(): Promise<SampleRubyWord[]> {
-    const response = await fetch(`${API_BASE_URL}/fetch_sample_ruby_words`);
+    const response = await apiFetch(`${API_BASE_URL}/fetch_sample_ruby_words`);
     if (!response.ok) throw new Error("Failed to load SampleRubyWord");
     return response.json();
 }
 
 async function postSampleRubyWord<T>(url: string, body: Record<string, unknown>): Promise<T> {
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(body),

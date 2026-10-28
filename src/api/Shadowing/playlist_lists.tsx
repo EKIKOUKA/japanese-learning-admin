@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export type PlaylistLists = {
@@ -12,13 +13,13 @@ export type PlaylistListsCreate = Omit<PlaylistLists, "created_at">;
 export type PlaylistListsUpdate = Omit<PlaylistLists, "id" | "created_at">;
 
 export async function getPlaylistLists(): Promise<PlaylistLists[]> {
-    const response = await fetch(`${API_BASE_URL}/fetch_video_playlist`);
+    const response = await apiFetch(`${API_BASE_URL}/fetch_video_playlist`);
     if (!response.ok) throw new Error("Failed to load PlaylistLists");
     return response.json();
 }
 
 async function postPlaylistLists<T>(url: string, body: Record<string, unknown>): Promise<T> {
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(body),

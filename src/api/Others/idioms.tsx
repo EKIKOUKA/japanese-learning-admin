@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export type Idioms = {
@@ -11,13 +12,13 @@ export type Idioms = {
 export type IdiomsChanges = Omit<Idioms, "id" | "created_at">;
 
 export async function getIdioms(): Promise<Idioms[]> {
-    const response = await fetch(`${API_BASE_URL}/fetch_idioms`);
+    const response = await apiFetch(`${API_BASE_URL}/fetch_idioms`);
     if (!response.ok) throw new Error("Failed to load Idioms");
     return response.json();
 }
 
 async function postIdioms<T>(url: string, body: Record<string, unknown>): Promise<T> {
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(body),

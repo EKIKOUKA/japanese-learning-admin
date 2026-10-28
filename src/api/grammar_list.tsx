@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 const API_BASE_URL= import.meta.env.VITE_API_BASE_URL;
 
 export type GrammarItem = {
@@ -13,7 +14,7 @@ export type GrammarItem = {
 }
 
 export async function getGrammarList(level: string) {
-    const response = await fetch(`${API_BASE_URL}/fetch_grammars?level=${level}`);
+    const response = await apiFetch(`${API_BASE_URL}/fetch_grammars?level=${level}`);
 
     if (!response.ok) {
         throw new Error("Failed to load SkipWordsList");
@@ -23,7 +24,7 @@ export async function getGrammarList(level: string) {
 }
 
 export async function updateGrammar(item: GrammarItem): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/update_grammars`, {
+    const response = await apiFetch(`${API_BASE_URL}/update_grammars`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(item)

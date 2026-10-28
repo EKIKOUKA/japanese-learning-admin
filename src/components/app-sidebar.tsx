@@ -21,13 +21,17 @@ import {
     CollapsibleContent
 } from "@/components/ui/collapsible"
 
-import { ChevronRight, Home, Film, Filter } from "lucide-react";
+import { ChevronRight, Home, Film, Filter, CreditCard } from "lucide-react";
 
 const items = [
     {
         title: "ホーム",
         url: "/",
         icon: Home
+    }, {
+        title: "クレジットチャージ",
+        url: "/credits",
+        icon: CreditCard
     }, {
         title: "シャドーイング",
         url: "",

@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
+import { RequireAuth } from './components/RequireAuth'
+import { AppleLogin } from './pages/AppleLogin'
 import { Dashboard } from "./pages/Dashboard.tsx";
 import { MainLayout } from "@/layouts/MainLayout.tsx";
 import { Videos } from "@/pages/Shadowing/Videos.tsx";
@@ -14,11 +16,17 @@ import { ShinaNoneKanjiWord } from "@/pages/Others/ShinaNoneKanjiWord.tsx";
 import { MemoryHardWord } from "@/pages/Others/MemoryHardWord.tsx";
 import { Idioms } from "@/pages/Others/Idioms.tsx";
 import { SampleRubyWord } from "@/pages/Others/SampleRubyWord.tsx";
+import { CreditRecharge } from "@/pages/CreditRecharge.tsx";
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
+                <Route path="/login" element={<AppleLogin />} />
+                <Route element={<RequireAuth />}>
+                <Route path="/credits" element={<MainLayout /> }>
+                    <Route index element={<CreditRecharge />} />
+                </Route>
                 <Route path="/" element={<MainLayout />} >
                     <Route index element={<Dashboard />} />
                     <Route path="shadowing/videos" element={<Videos />} />
@@ -33,6 +41,7 @@ function App() {
                     <Route path="others/memory_hard_word" element={<MemoryHardWord />} />
                     <Route path="others/idioms" element={<Idioms />} />
                     <Route path="others/sample_ruby_word" element={<SampleRubyWord />} />
+                </Route>
                 </Route>
             </Routes>
         </BrowserRouter>

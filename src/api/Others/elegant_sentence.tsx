@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export type ElegantSentence = {
@@ -9,13 +10,13 @@ export type ElegantSentence = {
 export type ElegantSentenceChanges = Omit<ElegantSentence, "id" | "created_at">;
 
 export async function getElegantSentence(): Promise<ElegantSentence[]> {
-    const response = await fetch(`${API_BASE_URL}/fetch_elegant_sentence`);
+    const response = await apiFetch(`${API_BASE_URL}/fetch_elegant_sentence`);
     if (!response.ok) throw new Error("Failed to load ElegantSentence");
     return response.json();
 }
 
 async function postElegantSentence<T>(url: string, body: Record<string, unknown>): Promise<T> {
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(body),

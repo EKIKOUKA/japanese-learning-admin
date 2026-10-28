@@ -1,0 +1,8 @@
+.apple-login { min-height:100svh; display:grid; place-items:center; padding:24px; background:#fafafa; color:#222; text-align:center; }
+.login-card { width:100%; max-width:340px; }
+.apple-login h1 { font-size:28px; font-weight:600; margin:0 0 12px; letter-spacing:0; }
+.login-card p { font-size:13px; color:#666; line-height:1.7; }
+.apple-signin { display:grid; place-items:center; width:100%; min-height:48px; margin-top:28px; padding:0 10px; border:0; border-radius:8px; background:#000; color:#fff; font-size:16px; font-weight:500; cursor:pointer; }
+.apple-signin img { display:block; width:320px; max-width:100%; height:44px; object-fit:contain; }
+.apple-signin:disabled { opacity:.55; cursor:wait; }
+.login-card .login-error { color:#b42318; margin-top:16px; }
