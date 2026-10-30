@@ -78,10 +78,23 @@ function PaymentButton({ product, onPaid, onError }: {
         <div className="space-y-3">
             <ExpressCheckoutElement
                 options={{
-                    buttonType: { applePay: "buy" },
+                    buttonType: {
+                        applePay: "plain"
+                    },
                     buttonHeight: 48,
-                    paymentMethods: { applePay: "always", googlePay: "never", link: "never", paypal: "never", amazonPay: "never", klarna: "never" },
-                    layout: { maxColumns: 1, maxRows: 1, overflow: "auto" }
+                    paymentMethods: {
+                        applePay: "always",
+                        googlePay: "never",
+                        link: "never",
+                        paypal: "never",
+                        amazonPay: "never",
+                        klarna: "never"
+                    },
+                    layout: {
+                        maxColumns: 1,
+                        maxRows: 1,
+                        overflow: "auto"
+                    }
                 }}
                 onConfirm={event => { void confirmPayment(event); }}
                 onReady={event => setAvailable(Boolean(event.availablePaymentMethods?.applePay))}
