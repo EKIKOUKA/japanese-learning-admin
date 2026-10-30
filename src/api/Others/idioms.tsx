@@ -21,7 +21,7 @@ async function postIdioms<T>(url: string, body: Record<string, unknown>): Promis
     const response = await apiFetch(url, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(body),
+        body: JSON.stringify(body)
     });
     if (!response.ok) throw new Error("idioms request failed");
     if (response.status === 204) return {} as T;
