@@ -81,9 +81,10 @@ function PaymentButton({ product, onPaid, onError }: {
                     buttonType: { applePay: "buy" },
                     buttonHeight: 48,
                     paymentMethods: { applePay: "always", googlePay: "never", link: "never", paypal: "never", amazonPay: "never", klarna: "never" },
-                    layout: { maxColumns: 1, maxRows: 1, overflow: "never" }
+                    layout: { maxColumns: 1, maxRows: 1, overflow: "auto" }
                 }}
                 onConfirm={event => { void confirmPayment(event); }}
+                onReady={event => setAvailable(Boolean(event.availablePaymentMethods?.applePay))}
                 onAvailablePaymentMethodsChange={event => setAvailable(Boolean(event.paymentMethods?.applePay?.available))}
                 onLoadError={() => onError("Apple Pay を読み込めませんでした。")}
             />
