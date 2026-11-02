@@ -16,7 +16,7 @@ export function RequireAuth() {
         return () => controller.abort();
     }, []);
 
-    if (status === "login") return <Navigate to="/login" replace />;
+    if (status === "login") return <Navigate to={`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`} replace />;
     if (status === "loading") return (
         <div className="auth-check-overlay" role="status" aria-live="polite" aria-busy="true">
             <div className="auth-check-dialog">

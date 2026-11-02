@@ -33,6 +33,10 @@ const items = [
         url: "/credits",
         icon: CreditCard
     }, {
+        title: "自動チャージ",
+        url: "/credits/automatic",
+        icon: CreditCard
+    }, {
         title: "シャドーイング",
         url: "",
         icon: Film,
@@ -44,6 +48,10 @@ const items = [
             }, {
                 title: "動画の追加再生リスト",
                 url: "/shadowing/playlist_list",
+                icon: Film
+            }, {
+                title: "動画アップロード",
+                url: "/shadowing/upload",
                 icon: Film
             }, {
                 title: "動画リスト",

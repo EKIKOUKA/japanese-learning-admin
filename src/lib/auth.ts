@@ -14,7 +14,7 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit) {
     const response = await fetch(input, { ...init, headers });
     if (response.status === 401) {
         clearToken();
-        if (location.pathname !== "/login") location.replace("/login");
+        if (location.pathname !== "/login") location.replace(`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`);
     }
 
     return response;

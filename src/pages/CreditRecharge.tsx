@@ -75,7 +75,7 @@ function PaymentButton({ product, onPaid, onError }: {
     }
 
     return (
-        <div className="space-y-3">
+        <div className="flex w-full flex-col gap-3">
             <ExpressCheckoutElement
                 options={{
                     buttonType: {
@@ -162,7 +162,7 @@ export function CreditRecharge() {
 
     return (
         <div className="w-full p-5 text-left sm:p-8">
-            <div className="mx-auto w-full max-w-3xl space-y-6">
+            <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
                 <header>
                     <h1 className="mb-2 text-3xl font-semibold tracking-tight sm:text-4xl">クレジットチャージ</h1>
                     <p className="text-muted-foreground">チャージするクレジットを選び、Apple Pay でお支払いください。</p>
@@ -179,7 +179,7 @@ export function CreditRecharge() {
                 )}
 
                 {stripeConfig?.publishableKey.startsWith("pk_test_") && (
-                    <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                         テスト決済モードです。実際の請求は発生しません。
                     </p>
                 )}

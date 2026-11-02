@@ -112,7 +112,8 @@ export function AppleLogin() {
 
             clearAppleFlow();
             setToken(data.sessionToken);
-            navigate("/", { replace: true });
+            const returnTo = new URLSearchParams(location.search).get("returnTo");
+            navigate(returnTo && /^\/(?!\/)/.test(returnTo) && !returnTo.includes("\\") && !returnTo.startsWith("/login") ? returnTo : "/", { replace: true });
         } catch (cause) {
             clearAppleFlow();
             const code = cause && typeof cause === "object" && "error" in cause ? cause.error : "";

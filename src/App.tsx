@@ -1,3 +1,5 @@
+import { AutomaticCharge } from "@/pages/AutomaticCharge";
+import { VideoUpload } from "@/pages/Shadowing/VideoUpload";
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
 import { RequireAuth } from './components/RequireAuth'
@@ -26,9 +28,11 @@ function App() {
                 <Route element={<RequireAuth />}>
                 <Route path="/credits" element={<MainLayout /> }>
                     <Route index element={<CreditRecharge />} />
+                    <Route path="automatic" element={<AutomaticCharge />} />
                 </Route>
                 <Route path="/" element={<MainLayout />} >
                     <Route index element={<Dashboard />} />
+                    <Route path="shadowing/upload" element={<VideoUpload />} />
                     <Route path="shadowing/videos" element={<Videos />} />
                     <Route path="shadowing/playlist_category" element={<PlaylistCategories />} />
                     <Route path="shadowing/playlist_list" element={<PlaylistLists />} />
