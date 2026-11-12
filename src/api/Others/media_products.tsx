@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 
 export type MediaProduct = {
     id: string;
@@ -13,7 +12,7 @@ export type MediaProduct = {
 export type MediaProductChanges = Omit<MediaProduct, "id" | "created_at">;
 
 export async function getMediaProducts(): Promise<MediaProduct[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_video_products`);
+    const response = await apiFetch(`${API_BASE}/fetch_video_products`);
     if (!response.ok) throw new Error("Failed to load MediaProduct");
     return response.json();
 }
@@ -30,9 +29,9 @@ async function postMediaProduct<T>(url: string, body: Record<string, unknown>): 
 }
 
 export async function updateMediaProduct(id: string, changes: MediaProductChanges): Promise<Partial<MediaProduct>> {
-    return postMediaProduct<Partial<MediaProduct>>(`${API_BASE_URL}/update_video_products`, {id, ...changes});
+    return postMediaProduct<Partial<MediaProduct>>(`${API_BASE}/update_video_products`, {id, ...changes});
 }
 
 export async function addMediaProduct(changes: MediaProductChanges): Promise<Partial<MediaProduct>> {
-    return postMediaProduct<Partial<MediaProduct>>(`${API_BASE_URL}/add_video_products`, changes);
+    return postMediaProduct<Partial<MediaProduct>>(`${API_BASE}/add_video_products`, changes);
 }

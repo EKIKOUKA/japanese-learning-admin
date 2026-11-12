@@ -21,88 +21,90 @@ import {
     CollapsibleContent
 } from "@/components/ui/collapsible"
 
-import { ChevronRight, Home, Film, Filter, CreditCard } from "lucide-react";
+import { ChartColumn, ChevronRight, CloudUpload, FolderTree, Headphones, LayoutDashboard, ListVideo, RefreshCw, Video, Wallet } from "lucide-react";
 
 const items = [
     {
         title: "ホーム",
         url: "/",
-        icon: Home
+        icon: LayoutDashboard
     }, {
         title: "クレジットチャージ",
         url: "/credits",
-        icon: CreditCard
+        icon: Wallet
     }, {
         title: "自動チャージ",
         url: "/credits/automatic",
-        icon: CreditCard
+        icon: RefreshCw
     }, {
-        title: "シャドーイング",
+        title: "動画管理",
         url: "",
-        icon: Film,
+        icon: Headphones,
         children: [
             {
                 title: "カテゴリ",
                 url: "/shadowing/playlist_category",
-                icon: Film
+                icon: FolderTree
             }, {
                 title: "動画の追加再生リスト",
                 url: "/shadowing/playlist_list",
-                icon: Film
+                icon: ListVideo
             }, {
                 title: "動画アップロード",
                 url: "/shadowing/upload",
-                icon: Film
+                icon: CloudUpload
             }, {
                 title: "動画リスト",
                 url: "/shadowing/videos",
-                icon: Film
+                icon: Video
             }, {
                 title: "練習記録",
                 url: "/shadowing/practice_record",
-                icon: Film
-            }, {
-                title: "スキップ単語リスト",
-                url: "/shadowing/skip_words_list",
-                icon: Filter
-            }
+                icon: ChartColumn
+            },
+            // {
+            //     title: "スキップ単語リスト",
+            //     url: "/shadowing/skip_words_list",
+            //     icon: Filter
+            // }
         ]
-    }, {
-        title: "日本語文法リスト",
-        url: "/grammar_list",
-        icon: Filter
-    }, {
-        title: "その他",
-        url: "",
-        icon: Filter,
-        children: [
-            {
-                title: "国語美文",
-                url: "/others/elegant_sentence",
-                icon: Filter
-            }, {
-                title: "映像作品リスト",
-                url: "/others/media_products",
-                icon: Filter
-            }, {
-                title: "台湾語に無い漢字",
-                url: "/others/shina_none_kanji_word",
-                icon: Filter
-            }, {
-                title: "覚えにくい単語",
-                url: "/others/memory_hard_word",
-                icon: Filter
-            }, {
-                title: "慣用句",
-                url: "/others/Idioms",
-                icon: Filter
-            }, {
-                title: "同じ発音の言葉",
-                url: "/others/sample_ruby_word",
-                icon: Filter
-            }
-        ]
-    }
+    },
+    // {
+    //     title: "日本語文法リスト",
+    //     url: "/grammar_list",
+    //     icon: Filter
+    // }, {
+    //     title: "その他",
+    //     url: "",
+    //     icon: Filter,
+    //     children: [
+    //         {
+    //             title: "国語美文",
+    //             url: "/others/elegant_sentence",
+    //             icon: Filter
+    //         }, {
+    //             title: "映像作品リスト",
+    //             url: "/others/media_products",
+    //             icon: Filter
+    //         }, {
+    //             title: "台湾語に無い漢字",
+    //             url: "/others/shina_none_kanji_word",
+    //             icon: Filter
+    //         }, {
+    //             title: "覚えにくい単語",
+    //             url: "/others/memory_hard_word",
+    //             icon: Filter
+    //         }, {
+    //             title: "慣用句",
+    //             url: "/others/Idioms",
+    //             icon: Filter
+    //         }, {
+    //             title: "同じ発音の言葉",
+    //             url: "/others/sample_ruby_word",
+    //             icon: Filter
+    //         }
+    //     ]
+    // }
 ]
 
 export function AppSidebar() {

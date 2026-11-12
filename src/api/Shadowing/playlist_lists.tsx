@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 
 export type PlaylistLists = {
     id: string;
@@ -13,7 +12,7 @@ export type PlaylistListsCreate = Omit<PlaylistLists, "created_at">;
 export type PlaylistListsUpdate = Omit<PlaylistLists, "id" | "created_at">;
 
 export async function getPlaylistLists(): Promise<PlaylistLists[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_video_playlist`);
+    const response = await apiFetch(`${API_BASE}/fetch_video_playlist`);
     if (!response.ok) throw new Error("Failed to load PlaylistLists");
     return response.json();
 }
@@ -30,13 +29,13 @@ async function postPlaylistLists<T>(url: string, body: Record<string, unknown>):
 }
 
 export async function updatePlaylistLists(id: string, changes: PlaylistListsUpdate): Promise<Partial<PlaylistLists>> {
-    return postPlaylistLists<Partial<PlaylistLists>>(`${API_BASE_URL}/update_video_playlist`, {id, ...changes});
+    return postPlaylistLists<Partial<PlaylistLists>>(`${API_BASE}/update_video_playlist`, {id, ...changes});
 }
 
 export async function addPlaylistLists(changes: PlaylistListsCreate): Promise<Partial<PlaylistLists>> {
-    return postPlaylistLists<Partial<PlaylistLists>>(`${API_BASE_URL}/add_video_playlist`, changes);
+    return postPlaylistLists<Partial<PlaylistLists>>(`${API_BASE}/add_video_playlist`, changes);
 }
 
 export async function deletePlaylistLists(id: string): Promise<void> {
-    await postPlaylistLists<Record<string, never>>(`${API_BASE_URL}/delete_video_playlist`, {id});
+    await postPlaylistLists<Record<string, never>>(`${API_BASE}/delete_video_playlist`, {id});
 }

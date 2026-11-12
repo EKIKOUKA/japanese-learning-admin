@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE, setToken } from "@/lib/auth";
 import { beginAppleLogin, readAppleResult, clearAppleFlow, type AppleConfig } from "@/lib/apple-login";
@@ -24,6 +24,41 @@ export function AppleLogin() {
     const [wrongOrigin, setWrongOrigin] = useState(false);
     const navigate = useNavigate();
 
+    const localDevelopment = import.meta.env.DEV && location.origin === "http://localhost:5173";
+    const finishSignIn = useCallback(async (response: unknown) => {
+        const result = readAppleResult(response);
+        if (!result.body) throw new Error(result.error || "ログインに失敗しました。");
+        const loginResponse = await fetch(`${API_BASE}/auth/apple/callback`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(result.body),
+            signal: AbortSignal.timeout(20000),
+        });
+        const data = await loginResponse.json();
+        if (!loginResponse.ok || typeof data.sessionToken !== "string") throw new Error(data.error || "ログインに失敗しました。");
+
+        const returnTo = sessionStorage.getItem("apple-dev-return-to") ?? new URLSearchParams(location.search).get("returnTo");
+        sessionStorage.removeItem("apple-dev-return-to");
+        clearAppleFlow();
+        setToken(data.sessionToken);
+        navigate(returnTo && /^\/(?!\/)/.test(returnTo) && !returnTo.includes("\\") && !returnTo.startsWith("/login") ? returnTo : "/", { replace: true });
+    }, [navigate]);
+
+    useEffect(() => {
+        const prefix = "#apple_result=";
+        if (!localDevelopment || !location.hash.startsWith(prefix)) return;
+        const encoded = location.hash.slice(prefix.length);
+        history.replaceState(history.state, "", location.pathname + location.search);
+        void Promise.resolve().then(async () => {
+            setBusy(true);
+            await finishSignIn(JSON.parse(decodeURIComponent(encoded)));
+        }).catch(cause => {
+            clearAppleFlow();
+            setError(cause instanceof Error ? cause.message : "ログインに失敗しました。");
+            setBusy(false);
+        });
+    }, [finishSignIn, localDevelopment]);
+
     useEffect(() => {
         let active = true;
         const controller = new AbortController();
@@ -39,7 +74,7 @@ export function AppleLogin() {
                 if (!active) return;
                 setConfig(settings);
 
-                if (location.origin !== new URL(settings.redirectURI).origin) {
+                if (!localDevelopment && location.origin !== new URL(settings.redirectURI).origin) {
                     setWrongOrigin(true);
                     setError("Apple ログインは admin.japanese-learning.makoto.lol からご利用ください。");
                 }
@@ -51,10 +86,10 @@ export function AppleLogin() {
             });
 
         return () => { active = false; controller.abort(); };
-    }, []);
+    }, [localDevelopment]);
 
     useEffect(() => {
-        if (!config || wrongOrigin) return;
+        if (!config || wrongOrigin || localDevelopment) return;
         let active = true;
         const initialize = () => {
             if (!window.AppleID) return;
@@ -87,33 +122,31 @@ export function AppleLogin() {
         }
 
         return () => { active = false; };
-    }, [config, wrongOrigin]);
+    }, [config, wrongOrigin, localDevelopment]);
 
     async function signIn() {
-        if (busy || !sdkReady || !window.AppleID) return;
+        if (busy || !config) return;
+        if (localDevelopment) {
+            const flow = beginAppleLogin(location.origin, sessionStorage, "redirect");
+            const returnTo = new URLSearchParams(location.search).get("returnTo");
+            if (returnTo) sessionStorage.setItem("apple-dev-return-to", returnTo);
+            else sessionStorage.removeItem("apple-dev-return-to");
+            const url = new URL("https://appleid.apple.com/auth/authorize");
+            url.search = new URLSearchParams({
+                client_id: config.clientID, redirect_uri: config.redirectURI,
+                response_type: "code", response_mode: "form_post", ...flow,
+            }).toString();
+            location.assign(url);
+            return;
+        }
+        if (!sdkReady || !window.AppleID) return;
         setBusy(true);
         setError("");
 
         try {
             const flow = beginAppleLogin();
             const response = await window.AppleID.auth.signIn({ ...flow, usePopup: true });
-            const result = readAppleResult(response);
-            if (!result.body) throw new Error(result.error || "ログインに失敗しました。");
-
-            const loginResponse = await fetch(`${API_BASE}/auth/apple/callback`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(result.body),
-                signal: AbortSignal.timeout(20000)
-            });
-
-            const data = await loginResponse.json();
-            if (!loginResponse.ok || typeof data.sessionToken !== "string") throw new Error(data.error || "ログインに失敗しました。");
-
-            clearAppleFlow();
-            setToken(data.sessionToken);
-            const returnTo = new URLSearchParams(location.search).get("returnTo");
-            navigate(returnTo && /^\/(?!\/)/.test(returnTo) && !returnTo.includes("\\") && !returnTo.startsWith("/login") ? returnTo : "/", { replace: true });
+            await finishSignIn(response);
         } catch (cause) {
             clearAppleFlow();
             const code = cause && typeof cause === "object" && "error" in cause ? cause.error : "";
@@ -126,8 +159,8 @@ export function AppleLogin() {
         <main className="apple-login">
             <div className="login-card">
                 <h1>日本語学習</h1><p>App と同じ Apple アカウントでログイン</p>
-                <button type="button" className="apple-signin" onClick={signIn} disabled={busy || !sdkReady || wrongOrigin}>
-                    {busy ? "ログイン中…" : wrongOrigin ? "オンラインサイトからログイン" : !sdkReady ? "読み込み中…" : (
+                <button type="button" className="apple-signin" onClick={signIn} disabled={busy || !(localDevelopment ? config : sdkReady) || wrongOrigin}>
+                    {busy ? "ログイン中…" : wrongOrigin ? "オンラインサイトからログイン" : !(localDevelopment ? config : sdkReady) ? "読み込み中…" : (
                         <img
                             src="https://appleid.cdn-apple.com/appleid/button?height=44&width=320&color=black&border=false&type=sign-in&border_radius=8&scale=2&locale=ja_JP"
                             alt="Appleでサインイン"

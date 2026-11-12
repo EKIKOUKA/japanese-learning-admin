@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 
 export type Video = {
     id: string;
@@ -12,23 +11,24 @@ export type Video = {
     status: string;
     content_language: string;
     aspect_ratio: number;
+    duration_seconds: number | null;
 };
 
-export type VideoChanges = Omit<Video, "id" | "created_at">;
+export type VideoChanges = Omit<Video, "id" | "created_at" | "duration_seconds">;
 
 export type PlaylistCategory = {
     id: string;
     title: string;
 };
 
-export async function getVideos(): Promise<Video[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_videos`);
+export async function getVideos(signal?: AbortSignal): Promise<Video[]> {
+    const response = await apiFetch(`${API_BASE}/fetch_videos`, { signal });
     if (!response.ok) throw new Error("Failed to load videos");
     return response.json();
 }
 
 export async function getPlaylistCategories(): Promise<PlaylistCategory[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_playlist_categories`);
+    const response = await apiFetch(`${API_BASE}/fetch_playlist_categories`);
     if (!response.ok) throw new Error("Failed to load playlist categories");
     return response.json();
 }
@@ -45,9 +45,9 @@ async function postVideo<T>(url: string, body: Record<string, unknown>): Promise
 }
 
 export async function updateVideo(id: string, changes: VideoChanges): Promise<Partial<Video>> {
-    return postVideo<Partial<Video>>(`${API_BASE_URL}/update_video`, {id, ...changes});
+    return postVideo<Partial<Video>>(`${API_BASE}/update_video`, {id, ...changes});
 }
 
 export async function deleteVideo(id: string): Promise<void> {
-    await postVideo<Record<string, never>>(`${API_BASE_URL}/delete_video`, {id});
+    await postVideo<Record<string, never>>(`${API_BASE}/delete_video`, {id});
 }

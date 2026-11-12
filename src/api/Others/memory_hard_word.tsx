@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 
 export type MemoryHardWord = {
     id: number;
@@ -12,7 +11,7 @@ export type MemoryHardWord = {
 export type MemoryHardWordChanges = Omit<MemoryHardWord, "id" | "created_at">;
 
 export async function getMemoryHardWord(): Promise<MemoryHardWord[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_memory_hard_words`);
+    const response = await apiFetch(`${API_BASE}/fetch_memory_hard_words`);
     if (!response.ok) throw new Error("Failed to load MemoryHardWord");
     return response.json();
 }
@@ -29,13 +28,13 @@ async function postMemoryHardWord<T>(url: string, body: Record<string, unknown>)
 }
 
 export async function updateMemoryHardWord(id: number, changes: MemoryHardWordChanges): Promise<Partial<MemoryHardWord>> {
-    return postMemoryHardWord<Partial<MemoryHardWord>>(`${API_BASE_URL}/update_memory_hard_words`, {id, ...changes});
+    return postMemoryHardWord<Partial<MemoryHardWord>>(`${API_BASE}/update_memory_hard_words`, {id, ...changes});
 }
 
 export async function addMemoryHardWord(changes: MemoryHardWordChanges): Promise<Partial<MemoryHardWord>> {
-    return postMemoryHardWord<Partial<MemoryHardWord>>(`${API_BASE_URL}/add_memory_hard_words`, changes);
+    return postMemoryHardWord<Partial<MemoryHardWord>>(`${API_BASE}/add_memory_hard_words`, changes);
 }
 
 export async function deleteMemoryHardWord(id: number): Promise<void> {
-    await postMemoryHardWord<Record<string, never>>(`${API_BASE_URL}/delete_memory_hard_words`, {id});
+    await postMemoryHardWord<Record<string, never>>(`${API_BASE}/delete_memory_hard_words`, {id});
 }

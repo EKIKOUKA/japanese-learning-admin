@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 
 export type SampleRubyWord = {
     id: number;
@@ -12,7 +11,7 @@ export type SampleRubyWord = {
 export type SampleRubyWordChanges = Omit<SampleRubyWord, "id" | "created_at">;
 
 export async function getSampleRubyWord(): Promise<SampleRubyWord[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_sample_ruby_words`);
+    const response = await apiFetch(`${API_BASE}/fetch_sample_ruby_words`);
     if (!response.ok) throw new Error("Failed to load SampleRubyWord");
     return response.json();
 }
@@ -29,13 +28,13 @@ async function postSampleRubyWord<T>(url: string, body: Record<string, unknown>)
 }
 
 export async function updateSampleRubyWord(id: number, changes: SampleRubyWordChanges): Promise<Partial<SampleRubyWord>> {
-    return postSampleRubyWord<Partial<SampleRubyWord>>(`${API_BASE_URL}/update_sample_ruby_words`, {id, ...changes});
+    return postSampleRubyWord<Partial<SampleRubyWord>>(`${API_BASE}/update_sample_ruby_words`, {id, ...changes});
 }
 
 export async function addSampleRubyWord(changes: SampleRubyWordChanges): Promise<Partial<SampleRubyWord>> {
-    return postSampleRubyWord<Partial<SampleRubyWord>>(`${API_BASE_URL}/add_sample_ruby_words`, changes);
+    return postSampleRubyWord<Partial<SampleRubyWord>>(`${API_BASE}/add_sample_ruby_words`, changes);
 }
 
 export async function deleteSampleRubyWord(id: number): Promise<void> {
-    await postSampleRubyWord<Record<string, never>>(`${API_BASE_URL}/delete_sample_ruby_words`, {id});
+    await postSampleRubyWord<Record<string, never>>(`${API_BASE}/delete_sample_ruby_words`, {id});
 }

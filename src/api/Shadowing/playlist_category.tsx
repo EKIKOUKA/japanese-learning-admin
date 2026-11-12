@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 
 export type PlaylistCategories = {
     id: number;
@@ -13,7 +12,7 @@ export type PlaylistCategories = {
 export type PlaylistCategoriesChanges = Omit<PlaylistCategories, "id" | "created_at">;
 
 export async function getOriginPlaylistCategories(): Promise<PlaylistCategories[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_playlist_categories_origin`);
+    const response = await apiFetch(`${API_BASE}/fetch_playlist_categories_origin`);
     if (!response.ok) throw new Error("Failed to load PlaylistCategories");
     return response.json();
 }
@@ -30,13 +29,13 @@ async function postPlaylistCategories<T>(url: string, body: Record<string, unkno
 }
 
 export async function updatePlaylistCategories(id: number, changes: PlaylistCategoriesChanges): Promise<Partial<PlaylistCategories>> {
-    return postPlaylistCategories<Partial<PlaylistCategories>>(`${API_BASE_URL}/update_playlist_category`, {id, ...changes});
+    return postPlaylistCategories<Partial<PlaylistCategories>>(`${API_BASE}/update_playlist_category`, {id, ...changes});
 }
 
 export async function addPlaylistCategories(changes: PlaylistCategoriesChanges): Promise<Partial<PlaylistCategories>> {
-    return postPlaylistCategories<Partial<PlaylistCategories>>(`${API_BASE_URL}/add_playlist_category`, changes);
+    return postPlaylistCategories<Partial<PlaylistCategories>>(`${API_BASE}/add_playlist_category`, changes);
 }
 
 export async function deletePlaylistCategories(id: number): Promise<void> {
-    await postPlaylistCategories<Record<string, never>>(`${API_BASE_URL}/delete_playlist_category`, {id});
+    await postPlaylistCategories<Record<string, never>>(`${API_BASE}/delete_playlist_category`, {id});
 }

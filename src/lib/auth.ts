@@ -1,4 +1,5 @@
 export const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://japanese-learning.makoto.lol/shadowing").replace(/\/$/, "");
+
 const key = "japanese-session";
 export const getToken = () => sessionStorage.getItem(key);
 export const setToken = (token: string) => sessionStorage.setItem(key, token);

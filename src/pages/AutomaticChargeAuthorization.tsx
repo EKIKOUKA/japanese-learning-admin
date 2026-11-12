@@ -82,6 +82,7 @@ function AuthorizeButton({authorization, onSaved, onBusy}: {
         onBusy(true);
         setError("");
         let setupSucceeded = confirmed;
+
         try {
             if (!confirmed) {
                 const submitted = await elements.submit();
@@ -110,35 +111,39 @@ function AuthorizeButton({authorization, onSaved, onBusy}: {
 
     return <div className="flex w-full flex-col gap-3">
         <p className="whitespace-pre-line text-sm text-muted-foreground">{billingAgreement}</p>
-        {!confirmed && <ExpressCheckoutElement options={{
-            applePay, buttonType: {applePay: "plain"}, buttonHeight: 48,
-            paymentMethods: {
-                applePay: "always",
-                googlePay: "never",
-                link: "never",
-                paypal: "never",
-                amazonPay: "never",
-                klarna: "never"
-            }
-        }}
-                                               onConfirm={event => void complete(event)} onReady={event => {
-            setReady(true);
-            setAvailable(Boolean(event.availablePaymentMethods?.applePay));
-        }}
-                                               onAvailablePaymentMethodsChange={event => setAvailable(Boolean(event.paymentMethods?.applePay?.available))}
-                                               onLoadError={() => {
-                                                   setReady(true);
-                                                   setError("Apple Pay を読み込めませんでした。対応端末・ブラウザで再度お試しください。");
-                                               }}/>}
+        {
+            !confirmed && <ExpressCheckoutElement options={{
+                applePay, buttonType: {applePay: "plain"}, buttonHeight: 48,
+                paymentMethods: {
+                    applePay: "always",
+                    googlePay: "never",
+                    link: "never",
+                    paypal: "never",
+                    amazonPay: "never",
+                    klarna: "never"
+                }
+            }}
+            onConfirm={event => void complete(event)} onReady={event => {
+                setReady(true);
+                setAvailable(Boolean(event.availablePaymentMethods?.applePay));
+            }}
+            onAvailablePaymentMethodsChange={event => setAvailable(Boolean(event.paymentMethods?.applePay?.available))}
+            onLoadError={() => {
+               setReady(true);
+               setError("Apple Pay を読み込めませんでした。対応端末・ブラウザで再度お試しください。");
+            }}/>
+        }
         {!ready && !confirmed &&
             <p role="status" className="text-sm text-muted-foreground">Apple Pay を読み込んでいます…</p>}
         {ready && !available && !confirmed &&
-            <p className="text-sm text-muted-foreground">Apple Pay 対応の端末・ブラウザで開き、Wallet
-                にカードを登録してください。</p>}
+            <p className="text-sm text-muted-foreground">
+                Apple Pay 対応の端末・ブラウザで開き、Wallet にカードを登録してください。
+            </p>
+        }
         {busy && <p role="status" className="text-sm">承認を確認しています…</p>}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         {confirmed && <button disabled={busy} className="rounded-lg border px-4 py-2"
-                              onClick={() => void complete()}>承認結果を再確認</button>}
+          onClick={() => void complete()}>承認結果を再確認</button>}
     </div>;
 }
 
@@ -187,35 +192,50 @@ export function ChargeEditor({type, rule, config, onSaved, onPrepared, onBusy}: 
     const field = "mt-2 block w-full rounded-lg border bg-background p-3 text-sm";
     return <div className="flex w-full flex-col items-start gap-4 border-t pt-5">
         <fieldset disabled={busy || Boolean(authorization)} className="flex w-full flex-col gap-4 disabled:opacity-70">
-            <label className="block text-sm font-medium">{type === "monthly" ? "毎月の金額" : "1 回の金額"}<select
-                className={field} value={amount}
-                onChange={event => setAmount(Number(event.target.value))}>{options.map(item => <option key={item.amount}
-                                                                                                       value={item.amount}>{yen(item.amount)} · {item.credits.toLocaleString("ja-JP")} クレジット</option>)}</select></label>
+            <label className="block text-sm font-medium">
+                {type === "monthly" ? "毎月の金額" : "1 回の金額"}
+                <select className={field} value={amount}
+                    onChange={event => setAmount(Number(event.target.value))}>
+                    {options.map(item => <option key={item.amount} value={item.amount}>
+                    {yen(item.amount)} · {item.credits.toLocaleString("ja-JP")} クレジット</option>)}
+                </select>
+            </label>
             {type === "monthly" ?
-                <label className="block text-sm font-medium">チャージ日<select className={field} value={day}
-                                                                               onChange={event => setDay(Number(event.target.value))}>{Array.from({length: 28}, (_, index) =>
-                    <option key={index} value={index + 1}>毎月 {index + 1} 日（日本時間）</option>)}</select></label> : <>
-                    <label className="block text-sm font-medium">この残高を下回ると追加（クレジット）<input
-                        className={field} type="number" inputMode="numeric" min={50} max={20000} step={1}
-                        value={threshold} onChange={event => setThreshold(event.target.value)}/></label>
-                    <label className="block text-sm font-medium">追加チャージの月額上限（円）<input className={field}
-                                                                                                  type="number"
-                                                                                                  inputMode="numeric"
-                                                                                                  min={Math.max(50, amount)}
-                                                                                                  max={20000} step={1}
-                                                                                                  value={limit}
-                                                                                                  onChange={event => setLimit(event.target.value)}/></label>
-                    {!valid && <p className="text-sm text-destructive">残高は 50〜20,000 クレジット、月額上限は 1 回の金額以上かつ
-                        50〜20,000 円の整数で入力してください。</p>}
-                </>}
+                <label className="block text-sm font-medium">チャージ日
+                    <select className={field} value={day}
+                            onChange={event => setDay(Number(event.target.value))}>{Array.from({length: 28}, (_, index) =>
+                        <option key={index} value={index + 1}>毎月 {index + 1} 日（日本時間）</option>)}
+                    </select>
+                </label> : <>
+                <label className="block text-sm font-medium">この残高を下回ると追加（クレジット）
+                    <input className={field} type="number" inputMode="numeric" min={50} max={20000} step={1}
+                        value={threshold} onChange={event => setThreshold(event.target.value)}/>
+                </label>
+                <label className="block text-sm font-medium">追加チャージの月額上限（円）
+                    <input className={field}
+                       type="number"
+                       inputMode="numeric"
+                       min={Math.max(50, amount)}
+                       max={20000} step={1}
+                       value={limit}
+                       onChange={event => setLimit(event.target.value)}
+                    />
+                </label>
+                 {!valid && <p className="text-sm text-destructive">残高は 50〜20,000 クレジット、月額上限は 1 回の金額以上かつ
+                    50〜20,000 円の整数で入力してください。</p>}
+                </>
+            }
         </fieldset>
-        <p className="text-sm text-muted-foreground">{type === "monthly" ? "次の指定日からチャージします。登録時の請求はありません。" : "現在の総残高で判定します。承認直後も残高が少ない場合は追加します。"}変更には
-            Apple Pay での再承認が必要です。</p>
-        {!authorization ? <><p
-            className="text-sm text-muted-foreground">準備を開始すると、現在の設定は新しい承認が完了するまで停止します。</p>
+        <p className="text-sm text-muted-foreground">
+            {type === "monthly" ? "次の指定日からチャージします。登録時の請求はありません。" : "現在の総残高で判定します。承認直後も残高が少ない場合は追加します。"}
+            変更には Apple Pay での再承認が必要です。
+        </p>
+        {!authorization ? <>
+            <p className="text-sm text-muted-foreground">準備を開始すると、現在の設定は新しい承認が完了するまで停止します。</p>
             <button disabled={!valid || busy}
-                    className="rounded-lg bg-primary px-5 py-3 text-sm text-primary-foreground disabled:opacity-50"
-                    onClick={() => void prepare()}>{busy ? "準備しています…" : "この内容で Apple Pay の承認へ"}</button>
+                className="rounded-lg bg-primary px-5 py-3 text-sm text-primary-foreground disabled:opacity-50"
+                onClick={() => void prepare()}>{busy ? "準備しています…" : "この内容で Apple Pay の承認へ"}
+            </button>
         </> : <Elements key={authorization.authorizationID} stripe={stripe} options={{
             mode: "setup",
             currency: "jpy",

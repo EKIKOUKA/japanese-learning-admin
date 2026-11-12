@@ -77,7 +77,8 @@ export default defineConfig([
 ## 支払い管理・動画アップロード
 
 - `/credits/automatic`: ログイン中の利用者の自動チャージ設定を確認・停止・変更。毎月／低残高を個別に Apple Pay で承認（SetupIntent、off_session）する。金額候補は API から取得する。
-- `/shadowing/upload`: MP4/MOV と SRT を既存の動画処理 API に送信。処理完了までページを開いたまま待機する。
+- `/shadowing/upload`: MP4/MOV を 8 MiB 単位で Container に一時アップロードする。SRT/JSON3 または日本語の自動字幕を使用し、処理済みの動画と字幕は既存の R2 に保存する。処理が終わるまでページを開いておく。
+- ローカルの Apple ログインは `http://localhost:5173` で利用できる。認証には公開 Admin の HTTPS コールバック（Pages Function）を使い、完了後にローカル画面へ戻る。
 - 旧 Worker URL は対応する管理画面へ転送する。ログイン後はアクセスしていたページに戻る。
 
 ビルド: `npm run build`

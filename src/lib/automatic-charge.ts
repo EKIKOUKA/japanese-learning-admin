@@ -6,5 +6,6 @@ export async function chargeRequest(path: string, body = {}) {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "設定を取得できませんでした。");
+
     return data;
 }

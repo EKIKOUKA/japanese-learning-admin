@@ -3,8 +3,8 @@ const key = "apple-login-flow";
 const random = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, "0")).join("");
 type FlowStorage = Pick<Storage, "setItem" | "getItem" | "removeItem">;
 
-export function beginAppleLogin(origin = location.origin, storage: FlowStorage = sessionStorage) {
-    const state = btoa(JSON.stringify({ origin, requestID: random(), mode: "inline" })).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+export function beginAppleLogin(origin = location.origin, storage: FlowStorage = sessionStorage, mode: "inline" | "redirect" = "inline") {
+    const state = btoa(JSON.stringify({ origin, requestID: random(), mode })).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
     const nonce = random();
     storage.setItem(key, JSON.stringify({ state, nonce }));
 

@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 
 export type ElegantSentence = {
     id: number;
@@ -10,7 +9,7 @@ export type ElegantSentence = {
 export type ElegantSentenceChanges = Omit<ElegantSentence, "id" | "created_at">;
 
 export async function getElegantSentence(): Promise<ElegantSentence[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_elegant_sentence`);
+    const response = await apiFetch(`${API_BASE}/fetch_elegant_sentence`);
     if (!response.ok) throw new Error("Failed to load ElegantSentence");
     return response.json();
 }
@@ -27,13 +26,13 @@ async function postElegantSentence<T>(url: string, body: Record<string, unknown>
 }
 
 export async function updateElegantSentence(id: number, changes: ElegantSentenceChanges): Promise<Partial<ElegantSentence>> {
-    return postElegantSentence<Partial<ElegantSentence>>(`${API_BASE_URL}/update_elegant_sentence`, {id, ...changes});
+    return postElegantSentence<Partial<ElegantSentence>>(`${API_BASE}/update_elegant_sentence`, {id, ...changes});
 }
 
 export async function addElegantSentence(changes: ElegantSentenceChanges): Promise<Partial<ElegantSentence>> {
-    return postElegantSentence<Partial<ElegantSentence>>(`${API_BASE_URL}/add_elegant_sentence`, changes);
+    return postElegantSentence<Partial<ElegantSentence>>(`${API_BASE}/add_elegant_sentence`, changes);
 }
 
 export async function deleteElegantSentence(id: number): Promise<void> {
-    await postElegantSentence<Record<string, never>>(`${API_BASE_URL}/delete_elegant_sentence`, {id});
+    await postElegantSentence<Record<string, never>>(`${API_BASE}/delete_elegant_sentence`, {id});
 }

@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 
 export type Idioms = {
     id: number;
@@ -12,7 +11,7 @@ export type Idioms = {
 export type IdiomsChanges = Omit<Idioms, "id" | "created_at">;
 
 export async function getIdioms(): Promise<Idioms[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_idioms`);
+    const response = await apiFetch(`${API_BASE}/fetch_idioms`);
     if (!response.ok) throw new Error("Failed to load Idioms");
     return response.json();
 }
@@ -29,13 +28,13 @@ async function postIdioms<T>(url: string, body: Record<string, unknown>): Promis
 }
 
 export async function updateIdioms(id: number, changes: IdiomsChanges): Promise<Partial<Idioms>> {
-    return postIdioms<Partial<Idioms>>(`${API_BASE_URL}/update_idioms`, {id, ...changes});
+    return postIdioms<Partial<Idioms>>(`${API_BASE}/update_idioms`, {id, ...changes});
 }
 
 export async function addIdioms(changes: IdiomsChanges): Promise<Partial<Idioms>> {
-    return postIdioms<Partial<Idioms>>(`${API_BASE_URL}/add_idioms`, changes);
+    return postIdioms<Partial<Idioms>>(`${API_BASE}/add_idioms`, changes);
 }
 
 export async function deleteIdioms(id: number): Promise<void> {
-    await postIdioms<Record<string, never>>(`${API_BASE_URL}/delete_idioms`, {id});
+    await postIdioms<Record<string, never>>(`${API_BASE}/delete_idioms`, {id});
 }

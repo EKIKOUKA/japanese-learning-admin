@@ -1,5 +1,4 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 
 export type ShinaNoneKanjiWord = {
     id: number;
@@ -12,7 +11,7 @@ export type ShinaNoneKanjiWord = {
 export type ShinaNoneKanjiWordChanges = Omit<ShinaNoneKanjiWord, "id" | "created_at">;
 
 export async function getShinaNoneKanjiWord(): Promise<ShinaNoneKanjiWord[]> {
-    const response = await apiFetch(`${API_BASE_URL}/fetch_kanji_word`);
+    const response = await apiFetch(`${API_BASE}/fetch_kanji_word`);
     if (!response.ok) throw new Error("Failed to load ShinaNoneKanjiWord");
     return response.json();
 }
@@ -29,13 +28,13 @@ async function postShinaNoneKanjiWord<T>(url: string, body: Record<string, unkno
 }
 
 export async function updateShinaNoneKanjiWord(id: number, changes: ShinaNoneKanjiWordChanges): Promise<Partial<ShinaNoneKanjiWord>> {
-    return postShinaNoneKanjiWord<Partial<ShinaNoneKanjiWord>>(`${API_BASE_URL}/update_kanji_word`, {id, ...changes});
+    return postShinaNoneKanjiWord<Partial<ShinaNoneKanjiWord>>(`${API_BASE}/update_kanji_word`, {id, ...changes});
 }
 
 export async function addShinaNoneKanjiWord(changes: ShinaNoneKanjiWordChanges): Promise<Partial<ShinaNoneKanjiWord>> {
-    return postShinaNoneKanjiWord<Partial<ShinaNoneKanjiWord>>(`${API_BASE_URL}/add_kanji_word`, changes);
+    return postShinaNoneKanjiWord<Partial<ShinaNoneKanjiWord>>(`${API_BASE}/add_kanji_word`, changes);
 }
 
 export async function deleteShinaNoneKanjiWord(id: number): Promise<void> {
-    await postShinaNoneKanjiWord<Record<string, never>>(`${API_BASE_URL}/delete_kanji_word`, {id});
+    await postShinaNoneKanjiWord<Record<string, never>>(`${API_BASE}/delete_kanji_word`, {id});
 }

@@ -1,10 +1,9 @@
-import { apiFetch } from "@/lib/auth";
-const API_BASE_URL= import.meta.env.VITE_API_BASE_URL;
+import { apiFetch, API_BASE } from "@/lib/auth";
 type SkipWordsType = "skipWithPreviousLines" | "skipWithNextLines" | "skipOnlyCurrentLine";
 
 export async function getSkipWords() {
     const response = await apiFetch(
-        `${API_BASE_URL}/config/video_subtitle_skip_words`
+        `${API_BASE}/config/video_subtitle_skip_words`
     );
 
     if (!response.ok) {
@@ -34,8 +33,8 @@ async function postSkipWords(url: string, type: SkipWordsType, word: string) {
 }
 
 export async function addSkipWords(type: SkipWordsType, word: string) {
-    return postSkipWords(`${API_BASE_URL}/config/video_subtitle_skip_words/add`, type, word);
+    return postSkipWords(`${API_BASE}/config/video_subtitle_skip_words/add`, type, word);
 }
 export async function deleteSkipWords(type: SkipWordsType, word: string) {
-    return postSkipWords(`${API_BASE_URL}/config/video_subtitle_skip_words/delete`, type, word);
+    return postSkipWords(`${API_BASE}/config/video_subtitle_skip_words/delete`, type, word);
 }
